@@ -211,6 +211,8 @@ namespace LordG.IO
             return new Tuple<int, byte[]>(align, o.ToArray());
         }
 
+        public static EndianStream Compress(SarcData data, int _align = -1) => PackN(data, _align).Item2;
+
         public static SarcData UnpackRamN(byte[] src) =>
             UnpackRamN(new MemoryStream(src));
 
