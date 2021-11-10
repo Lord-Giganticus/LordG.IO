@@ -10,8 +10,4 @@
 	  <PackageReference Include="Syroot.Maths" Version="1.5.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Tako\MSG\" />
-  </ItemGroup>
-
 </Project>

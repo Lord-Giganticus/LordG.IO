@@ -21,6 +21,12 @@ namespace LordG.IO
             }
         }
 
-        
+        public static BMG Decompress(EndianStream src, ByteOrder order, bool dispose = false)
+        {
+            var mf = src.ToMemoryFile(order, dispose);
+            return new BMG(mf);
+        }
+
+        public static BMG Decompress(byte[] src, ByteOrder order) => Decompress(src, order, true);
     }
 }

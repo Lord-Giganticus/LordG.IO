@@ -48,8 +48,15 @@ namespace Takochu.smg.msg
 
     class SystemGroup : MessageBase
     {
-        public SystemGroup(ref FileBase file)
+        public SystemGroup(ref FileBase file, bool Galaxy1 = false)
         {
+            if (Galaxy1)
+            {
+                file.ReadInt16();
+                mColor = file.ReadByte();
+                file.ReadByte();
+                return;
+            }
             mType = file.ReadUInt16();
 
             // we skip the data size here, we can safely determine the size by the type
@@ -121,19 +128,25 @@ namespace Takochu.smg.msg
 
     class DisplayGroup : MessageBase
     {
-        public DisplayGroup(ref FileBase file)
+        public DisplayGroup(ref FileBase file, bool Galaxy1 = false)
         {
-            mType = file.ReadUInt16();
-            file.Skip(0x2);
-
-            if (mType != 0)
-            {
-                file.Skip(0x4);
-            }
-            else
+            if (Galaxy1)
             {
                 mFrames = file.ReadUInt16();
+            } else
+            {
+                mType = file.ReadUInt16();
                 file.Skip(0x2);
+
+                if (mType != 0)
+                {
+                    file.Skip(0x4);
+                }
+                else
+                {
+                    mFrames = file.ReadUInt16();
+                    file.Skip(0x2);
+                }
             }
         }
 
@@ -195,13 +208,19 @@ namespace Takochu.smg.msg
 
     class NumberGroup : MessageBase
     {
-        public NumberGroup(ref FileBase file, int count = 0)
+        public NumberGroup(ref FileBase file, int count = 0, bool Galaxy1 = false)
         {
-            mMaxWidth = file.ReadUInt16();
-            mWidth = file.ReadUInt16();
+            if (Galaxy1)
+            {
+                mData = file.ReadBytes(count);
+            } else
+            {
+                mMaxWidth = file.ReadUInt16();
+                mWidth = file.ReadUInt16();
 
-            mData = file.ReadBytes(mWidth);
-            mNumber = BitConverter.ToInt32(mData, 0);
+                mData = file.ReadBytes(mWidth);
+                mNumber = BitConverter.ToInt32(mData, 0);
+            }
         }
 
         public override void Save(ref FileBase file)
