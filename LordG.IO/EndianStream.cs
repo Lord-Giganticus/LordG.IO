@@ -303,7 +303,7 @@ namespace LordG.IO
 
         public static implicit operator EndianStream(byte[] src) => new EndianStream(src);
 
-        public static implicit operator byte[](EndianStream src) => src.ToArray();
+        public static explicit operator byte[](EndianStream src) => src.ToArray();
         
         public static implicit operator BinaryDataReader(EndianStream src) => src.ToReader();
 
