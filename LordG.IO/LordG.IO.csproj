@@ -6,11 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="6.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\EndianStreams\EndianStreams\EndianStreams.csproj" />
+	  <PackageReference Include="Syroot.IO.BinaryData" Version="2.0.1" />
+	  <PackageReference Include="Syroot.Maths" Version="1.5.3" />
   </ItemGroup>
 
 </Project>

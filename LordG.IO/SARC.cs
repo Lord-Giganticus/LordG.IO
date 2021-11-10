@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using Syroot.BinaryData;
-using EndianStreams;
 
 namespace LordG.IO
 {
@@ -16,9 +15,24 @@ namespace LordG.IO
 
     public static class SARC
     {
-        public const uint Magic = 0x53415243;
+        public const uint MagicLe = 0x43524153;
 
-        public static bool CheckMagic(byte[] src) => ((EndianStream)src).ReadUInt(EndianStream.CurrentEndian) is Magic;
+        public const uint MagicBe = 0x53415243;
+
+        public static bool CheckMagic(byte[] src, ByteOrder order)
+        {
+            using (var es = (EndianStream)src)
+            {
+                var pos = es.Position;
+                using (BinaryDataReader reader = es)
+                {
+                    reader.Position = pos;
+                    reader.ByteOrder = order;
+                    var num = reader.ReadUInt32();
+                    return num is MagicLe || num is MagicBe;
+                }
+            }
+        }
 
         static bool Matches(this byte[] b, string str)
         {

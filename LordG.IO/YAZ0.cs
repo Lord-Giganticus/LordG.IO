@@ -2,15 +2,17 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
-using EndianStreams;
 using Syroot.BinaryData;
+using System.Linq;
 
 namespace LordG.IO
 {
     public static class YAZ0
     {
 
-		public const uint Magic = 0x59617A30;
+		public const uint MagicLE = 0x59617A30;
+
+		public const uint MagicBe = 0x307A6159;
 
 		public static void Decompress(ref byte[] data)
 		{
@@ -58,6 +60,15 @@ namespace LordG.IO
 			Array.Resize(ref data, fullsize);
 			output.CopyTo(data, 0);
 		}
+
+		public static EndianStream Decompress(EndianStream stream, bool dispose = false)
+        {
+			var buf = stream.ToArray();
+			Decompress(ref buf);
+			if (dispose)
+				stream.Dispose();
+			return new EndianStream(buf);
+        }
 
 		public static unsafe byte[] Compress(byte[] Data)
 		{
@@ -159,6 +170,13 @@ namespace LordG.IO
 			return realresult;
 		}
 
-		public static bool CheckMagic(byte[] data) => ((EndianStream)data).ReadUInt(EndianStream.CurrentEndian) is Magic;
+		public static bool CheckMagic(byte[] src, ByteOrder order)
+        {
+			using (EndianStream stream = src)
+            {
+				var num = stream.ReadUInt(order);
+				return num is MagicLE || num is MagicBe;
+			}
+        }
 	}
 }
