@@ -39,6 +39,25 @@ namespace LordG.IO
                 .Where(x => x.GetType() == typeof(T))
                 .Select(x => (T)x);
         }
+
+        public static T CheckForMessageBaseType<T>(this string str) where T : MessageBase
+        {
+            if (typeof(T) == typeof(Character))
+            {
+                if (str is "\n")
+                {
+                    return (T)(MessageBase)new Character(0xA);
+                } else
+                {
+                    var buf = Encoding.Unicode.GetBytes(str);
+                    short num = BitConverter.ToInt16(buf, 0);
+                    return (T)(MessageBase)new Character(num);
+                }
+            } else
+            {
+                return null;
+            }
+        }
     }
 
     public class BMGNameHolder
@@ -71,12 +90,36 @@ namespace LordG.IO
             tbl.Close();
         }
 
-        public string[] GetAllMessages()
+        public string[] GetAllMessagesAsStrings()
         {
             return MessageTable
                 .Values
                 .Select(x => Messages.GetStringAtIdx(x))
                 .ToArray();
+        }
+
+        public MessageBase[][] GetAllMessages()
+        {
+            return Messages.mInfo.mEntries
+                .Select(x => x.mMessage)
+                .Select(x => x.ToArray())
+                .ToArray();
+        }
+
+        public static (List<string> MessageSplit, List<Type> Types) GetMessages(MessageBase[] messages)
+        {
+
+            var types = new List<Type>(messages.Length);
+            var message = new List<string>(messages.Length);
+            void Change(MessageBase m)
+            {
+                message.Add(m.ToString());
+                types.Add(m.GetType());
+            }
+            messages
+                .ToList()
+                .ForEach(Change);
+            return (message, types);
         }
 
         public string GetGalaxyName(string galaxy) => Messages.GetStringAtIdx(MessageTable[$"GalaxyName_{galaxy}"]);
