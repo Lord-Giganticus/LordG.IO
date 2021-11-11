@@ -65,5 +65,23 @@ namespace LordG.IO
             }
             tbl.Close();
         }
+
+        public string[][] GetAllMessages()
+        {
+            return Messages.mInfo.mEntries
+                .Where(x => x.mMessage.Count > 0)
+                .Select(x => x.mMessage)
+                .Select(x => string.Join(string.Empty, x.GetAllOfMessageBaseType<Character>()
+                .Select(y => y.ToString())))
+                .Select(Change).ToArray();
+        }
+
+        private string[] Change(string str)
+        {
+            if (str.Contains("\n"))
+                return str.Split(new string[] { "\n" }, 0);
+            else
+                return new string[1] { str };
+        }
     }
 }
