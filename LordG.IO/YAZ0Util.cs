@@ -8,7 +8,7 @@ using Takochu.io;
 
 namespace LordG.IO
 {
-    public static class YAZ0
+    public static class YAZ0Util
     {
 
 		public const uint MagicLE = 0x59617A30;

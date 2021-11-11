@@ -25,6 +25,8 @@ namespace LordG.IO
         /// </summary>
         /// <returns>The new stream</returns>
         public static EndianStream ToEndianStream(this IEnumerable<char> src) => src.Select(x => (byte)x).ToArray();
+
+        public static Type GetListType<T>(this List<T> _) => typeof(T);
     }
 
     public static class ConversionUtil
@@ -35,9 +37,9 @@ namespace LordG.IO
 
         public static RARCFilesystem LoadRARC(EndianStream stream, ByteOrder order, bool dispose = false)
         {
-            if (YAZ0.CheckMagic((byte[])stream, order))
+            if (YAZ0Util.CheckMagic((byte[])stream, order))
             {
-                var es = YAZ0.Decompress(stream, dispose);
+                var es = YAZ0Util.Decompress(stream, dispose);
                 var buf = (byte[])es;
                 es.Dispose();
                 var mem = new MemoryFile(buf);

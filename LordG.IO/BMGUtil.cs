@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 using Syroot.BinaryData;
 using System.Xml;
+using Takochu.io;
+using LordG.IO.Properties;
+using Takochu.smg.msg;
+using System.Linq;
 
 namespace LordG.IO
 {
@@ -28,5 +32,38 @@ namespace LordG.IO
         }
 
         public static BMG Decompress(byte[] src, ByteOrder order) => Decompress(src, order, true);
+
+        public static T[] GetAllOfMessageBaseType<T>(this List<MessageBase> messages) where T : MessageBase => messages.Where(x => x.GetType() == typeof(T)).Select(x => (T)x).ToArray();
+    }
+
+    public class BMGNameHolder
+    {
+        public BMG Messages;
+
+        public Dictionary<string, int> MessageTable = new Dictionary<string, int>();
+
+        public BMGNameHolder(ref RARCFilesystem fs, ByteOrder order, bool Galaxy1 = true)
+        {
+            var buf = fs.GetRootFile("message.bmg");
+            var mem = new MemoryFile(buf)
+            {
+                mIsBigEndian = order is ByteOrder.BigEndian
+            };
+            Messages = new BMG(mem, Galaxy1);
+            buf = fs.GetRootFile("messageid.tbl");
+            mem = new MemoryFile(buf)
+            {
+                mIsBigEndian = order is ByteOrder.BigEndian
+            };
+            BCSV.sHashTable = new Dictionary<int, string>();
+            foreach (var line in Resources.FieldNames.Split(new string[] { Environment.NewLine }, 0))
+                BCSV.AddHash(line);
+            BCSV tbl = new BCSV(mem);
+            foreach (BCSV.Entry e in tbl.mEntries)
+            {
+                MessageTable.Add(e.Get<string>("MessageId"), e.Get<int>("Index"));
+            }
+            tbl.Close();
+        }
     }
 }

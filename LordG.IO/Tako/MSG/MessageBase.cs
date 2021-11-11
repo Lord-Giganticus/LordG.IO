@@ -7,7 +7,7 @@ using Takochu.io;
 
 namespace Takochu.smg.msg
 {
-    public class MessageBase
+    public abstract class MessageBase
     {
         public virtual void Save(ref FileBase file)
         {
@@ -16,8 +16,7 @@ namespace Takochu.smg.msg
         public virtual int CalcSize() { return 0; }
     }
 
-
-    class Character : MessageBase
+    public class Character : MessageBase
     {
         public Character(short cur)
         {
@@ -43,10 +42,10 @@ namespace Takochu.smg.msg
             return Encoding.Unicode.GetString(e).Replace("\"", "");
         }
 
-        ushort mCharacter;
+        public readonly ushort mCharacter;
     }
 
-    class SystemGroup : MessageBase
+    public class SystemGroup : MessageBase
     {
         public SystemGroup(ref FileBase file, bool Galaxy1 = false)
         {
@@ -90,11 +89,11 @@ namespace Takochu.smg.msg
             return $"[color={mColor}]";
         }
 
-        ushort mType;
-        short mColor;
+        public readonly ushort mType;
+        public readonly short mColor;
     }
 
-    class PictureGroup : MessageBase
+    public class PictureGroup : MessageBase
     {
         public PictureGroup(ref FileBase file)
         {
@@ -121,12 +120,12 @@ namespace Takochu.smg.msg
             return $"[img={mCharIdx}]";
         }
 
-        ushort mCharIdx;
-        ushort mFont;
-        ushort mCharID;
+        public readonly ushort mCharIdx;
+        public readonly ushort mFont;
+        public readonly ushort mCharID;
     }
 
-    class DisplayGroup : MessageBase
+    public class DisplayGroup : MessageBase
     {
         public DisplayGroup(ref FileBase file, bool Galaxy1 = false)
         {
@@ -173,11 +172,11 @@ namespace Takochu.smg.msg
             return $"[wait={mFrames}]";
         }
 
-        ushort mType;
-        ushort mFrames;
+        public readonly ushort mType;
+        public readonly ushort mFrames;
     }
 
-    class FontSizeGroup : MessageBase
+    public class FontSizeGroup : MessageBase
     {
         public FontSizeGroup(ref FileBase file)
         {
@@ -203,10 +202,10 @@ namespace Takochu.smg.msg
             return $"[font={mFontSize}]";
         }
 
-        ushort mFontSize;
+        public readonly ushort mFontSize;
     }
 
-    class NumberGroup : MessageBase
+    public class NumberGroup : MessageBase
     {
         public NumberGroup(ref FileBase file, int count = 0, bool Galaxy1 = false)
         {
@@ -244,14 +243,14 @@ namespace Takochu.smg.msg
             return $"[value={mNumber}]";
         }
 
-        ushort mMaxWidth;
-        ushort mWidth;
-        int mNumber;
+        public readonly ushort mMaxWidth;
+        public readonly ushort mWidth;
+        public readonly int mNumber;
 
-        byte[] mData;
+        public readonly byte[] mData;
     }
 
-    class SoundGroup : MessageBase
+    public class SoundGroup : MessageBase
     {
         public SoundGroup(ref FileBase file)
         {
@@ -279,10 +278,10 @@ namespace Takochu.smg.msg
             return $"[sound=\"{mSoundID}\"]";
         }
 
-        string mSoundID;
+        public readonly string mSoundID;
     }
 
-    class LocalizeGroup : MessageBase
+    public class LocalizeGroup : MessageBase
     {
         public LocalizeGroup(ref FileBase file)
         {
@@ -307,7 +306,7 @@ namespace Takochu.smg.msg
         }
     }
 
-    class StringGroup : MessageBase
+    public class StringGroup : MessageBase
     {
         public StringGroup(ref FileBase file, int count = 0)
         {
@@ -320,10 +319,10 @@ namespace Takochu.smg.msg
             return $"[string]";
         }
 
-        byte[] mData;
+        public readonly byte[] mData;
     }
 
-    class RaceTimeGroup : MessageBase
+    public class RaceTimeGroup : MessageBase
     {
         public RaceTimeGroup(ref FileBase file)
         {
@@ -335,6 +334,6 @@ namespace Takochu.smg.msg
             return mType == 5 ? "[current_time]" : "[best_time]";
         }
 
-        ushort mType;
+        public readonly ushort mType;
     }
 }
