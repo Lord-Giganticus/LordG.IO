@@ -76,24 +76,24 @@ namespace LordG.IO
             return Messages.mInfo.mEntries
                 .Where(x => x.mMessage.Count > 0)
                 .Select(x => x.mMessage)
-                .Select(x => string.Join(string.Empty, x.GetAllOfMessageBaseType<Character>()
-                .Select(y => y.ToString())))
+                .Select(x => x.GetAllOfMessageBaseType<Character>())
+                .Select(x => x.Select(y => y.ToString()))
+                .Select(x => string.Join(string.Empty, x))
                 .Select(Split).ToArray();
         }
 
         public byte[] WriteAllMessages()
         {
-            var messages = GetAllMessages();
-            var encoding = Encoding.UTF8;
-            using (var es = new EndianStream())
+            var allmessages = GetAllMessages();
+            using (var ms = new EndianStream())
             {
-                var strings = messages.Take(messages.Length - 1).Select(x => Join(x)).ToArray();
-                strings[strings.Length - 1] = $"{strings.Last()}{Environment.NewLine}";
-                Array.Resize(ref strings, messages.Length);
-                strings[strings.Length - 1] = Join(messages.Last(), true);
-                foreach (var str in strings)
-                    es.WriteString(str, encoding);
-                return (byte[])es;
+                foreach (var messages in allmessages.Take(allmessages.Length - 1))
+                    foreach (var message in messages)
+                        ms.WriteString($"{message}{Environment.NewLine}", Encoding.UTF8);
+                foreach (var message in allmessages.Last().Take(allmessages.Last().Length - 1))
+                    ms.WriteString($"{message}{Environment.NewLine}", Encoding.UTF8);
+                ms.WriteString(allmessages.Last().Last(), Encoding.UTF8);
+                return (byte[])ms;
             }
         }
 
@@ -105,7 +105,7 @@ namespace LordG.IO
                 return new string[1] { str };
         }
 
-        private string Join(string[] arr, bool islast = false)
+        public string Join(string[] arr, bool islast = false)
         {
             if (islast is false)
             {
