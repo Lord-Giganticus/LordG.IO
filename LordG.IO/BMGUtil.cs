@@ -33,7 +33,12 @@ namespace LordG.IO
 
         public static BMG Decompress(byte[] src, ByteOrder order) => Decompress(src, order, true);
 
-        public static T[] GetAllOfMessageBaseType<T>(this List<MessageBase> messages) where T : MessageBase => messages.Where(x => x.GetType() == typeof(T)).Select(x => (T)x).ToArray();
+        public static IEnumerable<T> GetAllOfMessageBaseType<T>(this IEnumerable<MessageBase> messages) where T : MessageBase
+        {
+            return messages
+                .Where(x => x.GetType() == typeof(T))
+                .Select(x => (T)x);
+        }
     }
 
     public class BMGNameHolder
@@ -73,15 +78,48 @@ namespace LordG.IO
                 .Select(x => x.mMessage)
                 .Select(x => string.Join(string.Empty, x.GetAllOfMessageBaseType<Character>()
                 .Select(y => y.ToString())))
-                .Select(Change).ToArray();
+                .Select(Split).ToArray();
         }
 
-        private string[] Change(string str)
+        public byte[] WriteAllMessages()
+        {
+            var messages = GetAllMessages();
+            var encoding = Encoding.UTF8;
+            using (var es = new EndianStream())
+            {
+                var strings = messages.Take(messages.Length - 1).Select(x => Join(x)).ToArray();
+                strings[strings.Length - 1] = $"{strings.Last()}{Environment.NewLine}";
+                Array.Resize(ref strings, messages.Length);
+                strings[strings.Length - 1] = Join(messages.Last(), true);
+                foreach (var str in strings)
+                    es.WriteString(str, encoding);
+                return (byte[])es;
+            }
+        }
+
+        private string[] Split(string str)
         {
             if (str.Contains("\n"))
                 return str.Split(new string[] { "\n" }, 0);
             else
                 return new string[1] { str };
+        }
+
+        private string Join(string[] arr, bool islast = false)
+        {
+            if (islast is false)
+            {
+                if (arr.Length > 1)
+                    return string.Join(Environment.NewLine, arr);
+                else
+                    return $"{arr.First()}{Environment.NewLine}";
+            } else
+            {
+                if (arr.Length > 1)
+                    return string.Join(Environment.NewLine, arr);
+                else
+                    return arr.First();
+            }
         }
     }
 }
