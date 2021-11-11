@@ -58,6 +58,11 @@ namespace LordG.IO
                 return null;
             }
         }
+
+        public static string ConvertToString(this IEnumerable<MessageBase> src)
+        {
+            return string.Join(string.Empty, src.Select(x => x.ToString()));
+        }
     }
 
     public class BMGNameHolder
