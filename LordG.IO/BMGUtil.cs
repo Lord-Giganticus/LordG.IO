@@ -71,55 +71,14 @@ namespace LordG.IO
             tbl.Close();
         }
 
-        public string[][] GetAllMessages()
+        public string[] GetAllMessages()
         {
-            return Messages.mInfo.mEntries
-                .Where(x => x.mMessage.Count > 0)
-                .Select(x => x.mMessage)
-                .Select(x => x.GetAllOfMessageBaseType<Character>())
-                .Select(x => x.Select(y => y.ToString()))
-                .Select(x => string.Join(string.Empty, x))
-                .Select(Split).ToArray();
+            return MessageTable
+                .Values
+                .Select(x => Messages.GetStringAtIdx(x))
+                .ToArray();
         }
 
-        public byte[] WriteAllMessages()
-        {
-            var allmessages = GetAllMessages();
-            using (var ms = new EndianStream())
-            {
-                foreach (var messages in allmessages.Take(allmessages.Length - 1))
-                    foreach (var message in messages)
-                        ms.WriteString($"{message}{Environment.NewLine}", Encoding.UTF8);
-                foreach (var message in allmessages.Last().Take(allmessages.Last().Length - 1))
-                    ms.WriteString($"{message}{Environment.NewLine}", Encoding.UTF8);
-                ms.WriteString(allmessages.Last().Last(), Encoding.UTF8);
-                return (byte[])ms;
-            }
-        }
-
-        private string[] Split(string str)
-        {
-            if (str.Contains("\n"))
-                return str.Split(new string[] { "\n" }, 0);
-            else
-                return new string[1] { str };
-        }
-
-        public string Join(string[] arr, bool islast = false)
-        {
-            if (islast is false)
-            {
-                if (arr.Length > 1)
-                    return string.Join(Environment.NewLine, arr);
-                else
-                    return $"{arr.First()}{Environment.NewLine}";
-            } else
-            {
-                if (arr.Length > 1)
-                    return string.Join(Environment.NewLine, arr);
-                else
-                    return arr.First();
-            }
-        }
+        public string GetGalaxyName(string galaxy) => Messages.GetStringAtIdx(MessageTable[$"GalaxyName_{galaxy}"]);
     }
 }
