@@ -61,7 +61,34 @@ namespace LordG.IO
 
         public static string ConvertToString(this IEnumerable<MessageBase> src)
         {
-            return string.Join(string.Empty, src.Select(x => x.ToString()));
+            return string.Join("\0", src.Select(x => x.ToString()));
+        }
+
+        public static void TryGetClasses<T>(this string str, out List<T> res) where T : MessageBase
+        {
+            res = new List<T>();
+            if (typeof(T) == typeof(Character))
+                foreach (var s in str.Split(new string[] { "\0" }, 0))
+                {
+                    if (s is "\n")
+                        res.Add((T)(MessageBase)new Character(0xA));
+                    else
+                    {
+                        var buf = Encoding.Unicode.GetBytes(s);
+                        short num = BitConverter.ToInt16(buf, 0);
+                        res.Add((T)(MessageBase)new Character(num));
+                    }
+                }
+            else if (typeof(T) == typeof(PictureGroup))
+                foreach (var s in str.Split(new string[] { "\0" }, 0)
+                    .Where(x => x.StartsWith("[img="))
+                    .Select(x => x.Substring(5)).Select(x => x.Remove(x.Length - 1, 1)))
+                    res.Add((T)(MessageBase)new PictureGroup() { mCharIdx = Convert.ToUInt16(s) });
+            else if (typeof(T) == typeof(DisplayGroup))
+                foreach (var s in str.Split(new string[] { "\0" }, 0)
+                    .Where(x => x.StartsWith("[wait="))
+                    .Select(x => x.Substring(6)).Select(x => x.Remove(x.Length - 1, 1)))
+                    res.Add((T)(MessageBase)new DisplayGroup() { mFrames = Convert.ToUInt16(s) });
         }
     }
 

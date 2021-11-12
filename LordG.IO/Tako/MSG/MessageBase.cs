@@ -101,6 +101,8 @@ namespace Takochu.smg.msg
             mCharIdx = Convert.ToUInt16(file.ReadUInt16() + 0x30);
         }
 
+        internal PictureGroup() { }
+
         public override int CalcSize()
         {
             return 0x8;
@@ -120,7 +122,7 @@ namespace Takochu.smg.msg
             return $"[img={mCharIdx}]";
         }
 
-        public readonly ushort mCharIdx;
+        public ushort mCharIdx;
         public readonly ushort mFont;
         public readonly ushort mCharID;
     }
@@ -149,6 +151,8 @@ namespace Takochu.smg.msg
             }
         }
 
+        internal DisplayGroup() { }
+
         public override int CalcSize()
         {
             return 0x8;
@@ -173,7 +177,7 @@ namespace Takochu.smg.msg
         }
 
         public readonly ushort mType;
-        public readonly ushort mFrames;
+        public ushort mFrames;
     }
 
     public class FontSizeGroup : MessageBase
