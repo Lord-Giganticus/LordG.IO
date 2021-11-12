@@ -42,7 +42,7 @@ namespace Takochu.smg.msg
             return Encoding.Unicode.GetString(e).Replace("\"", "");
         }
 
-        public readonly ushort mCharacter;
+        public ushort mCharacter;
     }
 
     public class SystemGroup : MessageBase
@@ -206,7 +206,7 @@ namespace Takochu.smg.msg
             return $"[font={mFontSize}]";
         }
 
-        public readonly ushort mFontSize;
+        public ushort mFontSize;
     }
 
     public class NumberGroup : MessageBase
@@ -249,7 +249,7 @@ namespace Takochu.smg.msg
 
         public readonly ushort mMaxWidth;
         public readonly ushort mWidth;
-        public readonly int mNumber;
+        public int mNumber;
 
         public readonly byte[] mData;
     }
@@ -282,7 +282,7 @@ namespace Takochu.smg.msg
             return $"[sound=\"{mSoundID}\"]";
         }
 
-        public readonly string mSoundID;
+        public string mSoundID;
     }
 
     public class LocalizeGroup : MessageBase
@@ -338,6 +338,6 @@ namespace Takochu.smg.msg
             return mType == 5 ? "[current_time]" : "[best_time]";
         }
 
-        public readonly ushort mType;
+        public ushort mType;
     }
 }
