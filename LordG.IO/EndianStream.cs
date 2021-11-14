@@ -2,7 +2,6 @@
 using System.IO;
 using System.Text;
 using Syroot.BinaryData;
-using Takochu.io;
 
 namespace LordG.IO
 {
@@ -302,13 +301,41 @@ namespace LordG.IO
 
         #region Castings
 
-        public static implicit operator EndianStream(byte[] src) => new EndianStream(src);
+        #region Implicit
 
-        public static explicit operator byte[](EndianStream src) => src.ToArray();
+        public static implicit operator EndianStream(byte[] src) => new EndianStream(src);
         
         public static implicit operator BinaryDataReader(EndianStream src) => src.ToReader();
 
         public static implicit operator BinaryDataWriter(EndianStream src) => src.ToWriter();
+
+        #endregion
+
+        #region Explicit
+
+        public static explicit operator byte[](EndianStream src) => src.ToArray();
+
+        public static explicit operator EndianStream(BinaryDataReader src)
+        {
+            var es = new EndianStream();
+            var pos = src.Position;
+            src.BaseStream.CopyTo(es);
+            src.Position = pos;
+            es.Position = 0;
+            return es;
+        }
+
+        public static explicit operator EndianStream(BinaryDataWriter src)
+        {
+            var es = new EndianStream();
+            var pos = src.Position;
+            src.BaseStream.CopyTo(es);
+            src.Position = pos;
+            es.Position = 0;
+            return es;
+        }
+
+        #endregion
 
         #endregion
 
@@ -320,20 +347,7 @@ namespace LordG.IO
 
         #endregion
 
-        #region Other Methods
-
-        public virtual MemoryFile ToMemoryFile(ByteOrder order, bool dispose = false)
-        {
-            var mf = new MemoryFile((byte[])this)
-            {
-                mIsBigEndian = order is ByteOrder.BigEndian
-            };
-            if (dispose)
-                Dispose();
-            return mf;
-        }
-
-        #endregion
+        
 
         #region Feilds
 
@@ -341,9 +355,12 @@ namespace LordG.IO
         /// <inheritdoc cref="BitConverter.IsLittleEndian"/>
         /// </summary>
         protected static readonly bool IsLittleEndian = BitConverter.IsLittleEndian;
-
+        /// <summary>
+        /// <inheritdoc cref="IsLittleEndian"/>
+        /// </summary>
         public static readonly ByteOrder CurrentEndian = IsLittleEndian ? ByteOrder.LittleEndian : ByteOrder.BigEndian;
 
+        internal static FileInfo LoadedFile { get; private set; }
         #endregion
     }
 }

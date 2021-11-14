@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System;
 using Syroot.BinaryData;
 using System.Text;
-using Takochu.io;
 using System.IO;
 
 namespace LordG.IO
@@ -32,28 +31,5 @@ namespace LordG.IO
     public static class ConversionUtil
     {
         public static bool ToBool(this byte b) => b != 0x0;
-
-        public static RARCFilesystem LoadRARC(FileInfo file, ByteOrder order) => LoadRARC(new EndianStream(file), order, true);
-
-        public static RARCFilesystem LoadRARC(EndianStream stream, ByteOrder order, bool dispose = false)
-        {
-            if (YAZ0Util.CheckMagic((byte[])stream, order))
-            {
-                var es = YAZ0Util.Decompress(stream, dispose);
-                var buf = (byte[])es;
-                es.Dispose();
-                var mem = new MemoryFile(buf);
-                var rfs = new RARCFilesystem(mem, order);
-                return rfs;
-            } else
-            {
-                var buf = (byte[])stream;
-                var mem = new MemoryFile(buf);
-                var rfs = new RARCFilesystem(mem, order);
-                if (dispose)
-                    stream.Dispose();
-                return rfs;
-            }
-        }
     }
 }
