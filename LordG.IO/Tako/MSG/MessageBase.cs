@@ -23,6 +23,8 @@ namespace Takochu.smg.msg
             mCharacter = (ushort)cur;
         }
 
+        public Character() { }
+
         public override void Save(ref FileBase file)
         {
             file.Write(mCharacter);
@@ -40,6 +42,16 @@ namespace Takochu.smg.msg
 
             byte[] e = BitConverter.GetBytes(mCharacter);
             return Encoding.Unicode.GetString(e).Replace("\"", "");
+        }
+
+        public static bool TryParse(string str, out Character res)
+        {
+            res = null;
+            if (str is "\n")
+                res = new Character() { mCharacter = 0xA };
+            else if (!string.IsNullOrWhiteSpace(str))
+                res = new Character() { mCharacter = BitConverter.ToUInt16(Encoding.Unicode.GetBytes(str), 0) };
+            return res is null;
         }
 
         public ushort mCharacter;

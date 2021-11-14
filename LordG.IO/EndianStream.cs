@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using Syroot.BinaryData;
+using Takochu.io;
 
 namespace LordG.IO
 {
@@ -347,7 +348,20 @@ namespace LordG.IO
 
         #endregion
 
-        
+        #region Other Methods
+
+        public virtual MemoryFile ToMemoryFile(ByteOrder order, bool dispose = false)
+        {
+            var mf = new MemoryFile((byte[])this)
+            {
+                mIsBigEndian = order is ByteOrder.BigEndian
+            };
+            if (dispose)
+                Dispose();
+            return mf;
+        }
+
+        #endregion
 
         #region Feilds
 

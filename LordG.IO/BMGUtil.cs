@@ -33,44 +33,22 @@ namespace LordG.IO
 
         public static BMG Decompress(byte[] src, ByteOrder order) => Decompress(src, order, true);
 
-        public static IEnumerable<T> GetAllOfMessageBaseType<T>(this IEnumerable<MessageBase> messages) where T : MessageBase
-        {
-            return messages
-                .Where(x => x.GetType() == typeof(T))
-                .Select(x => (T)x);
-        }
+        public static BMGMessage ToBMGMessage(this IEnumerable<MessageBase> src) => new BMGMessage(src);
+    }
 
-        public static T CheckForMessageBaseType<T>(this string str) where T : MessageBase
-        {
-            if (typeof(T) == typeof(Character))
-            {
-                if (str is "\n")
-                {
-                    return (T)(MessageBase)new Character(0xA);
-                } else
-                {
-                    var buf = Encoding.Unicode.GetBytes(str);
-                    short num = BitConverter.ToInt16(buf, 0);
-                    return (T)(MessageBase)new Character(num);
-                }
-            } else
-            {
-                return null;
-            }
-        }
+    public class BMGMessage
+    {
+        public readonly IEnumerable<MessageBase> MessageBases;
 
-        public static string ConvertToString(this IEnumerable<MessageBase> src)
-        {
-            return string.Join("\0", src.Select(x => x.ToString()));
-        }
+        public readonly string _Message;
 
-        public static void TryResconstructMessage(this string str, ref MessageBase[] src, out MessageBase[] result)
+        public string[] Message;
+
+        public BMGMessage(IEnumerable<MessageBase> src)
         {
-            result = new MessageBase[src.Length];
-            var splitstrings = str.Split(new string[] { "\0" }, 0);
-            for (int i = 0; i < src.Length; i++)
-                if (src[i].ToString() == splitstrings[i])
-                    result[i] = src[i]; 
+            MessageBases = src;
+            _Message = string.Join(" ", src.Select(x => x.ToString()));
+            Message = _Message.Split(new string[] { " " }, 0);
         }
     }
 
@@ -104,37 +82,11 @@ namespace LordG.IO
             tbl.Close();
         }
 
-        public string[] GetAllMessagesAsStrings()
-        {
-            return MessageTable
-                .Values
-                .Select(x => Messages.GetStringAtIdx(x))
-                .ToArray();
-        }
-
-        public MessageBase[][] GetAllMessages()
-        {
-            return Messages.mInfo.mEntries
+        public MessageBase[][] GetAllMessages() => 
+            Messages.mInfo.mEntries
                 .Select(x => x.mMessage)
                 .Select(x => x.ToArray())
                 .ToArray();
-        }
-
-        public static (List<string> MessageSplit, List<Type> Types) GetMessages(MessageBase[] messages)
-        {
-
-            var types = new List<Type>(messages.Length);
-            var message = new List<string>(messages.Length);
-            void Change(MessageBase m)
-            {
-                message.Add(m.ToString());
-                types.Add(m.GetType());
-            }
-            messages
-                .ToList()
-                .ForEach(Change);
-            return (message, types);
-        }
 
         public string GetGalaxyName(string galaxy) => Messages.GetStringAtIdx(MessageTable[$"GalaxyName_{galaxy}"]);
     }
