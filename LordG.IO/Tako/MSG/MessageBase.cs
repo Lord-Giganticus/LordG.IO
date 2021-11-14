@@ -80,6 +80,8 @@ namespace Takochu.smg.msg
             }
         }
 
+        public SystemGroup() { }
+
         public override int CalcSize()
         {
             return 0x8;
@@ -101,8 +103,15 @@ namespace Takochu.smg.msg
             return $"[color={mColor}]";
         }
 
+        public static bool TryParse(string str, out SystemGroup res)
+        {
+            res = null;
+            var s = str.Substring(7).Trim(new char[']']);
+            return res is null;
+        }
+
         public readonly ushort mType;
-        public readonly short mColor;
+        public short mColor;
     }
 
     public class PictureGroup : MessageBase
