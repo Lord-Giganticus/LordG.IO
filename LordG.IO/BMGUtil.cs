@@ -5,10 +5,11 @@ using Syroot.BinaryData;
 using System.Xml;
 using Takochu.io;
 using LordG.IO.Properties;
+using LordG.IO;
 using Takochu.smg.msg;
 using System.Linq;
 
-namespace LordG.IO
+namespace Takochu.smg.msg
 {
     public static class BMGUtil
     {

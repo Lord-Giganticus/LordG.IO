@@ -4,9 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Takochu.io;
-using Takochu.smg.msg;
 
-namespace LordG.IO
+namespace Takochu.smg.msg
 {
     public class BMG
     {

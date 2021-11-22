@@ -9,23 +9,20 @@ namespace LordG.IO
 {
     public static class CollectionUtil
     {
-        /// <summary>
-        /// Converts a Enumerator of <see cref="char"/> to a Enumerator of <see cref="byte"/>
-        /// </summary>
-        /// <returns>The Enumerator of <see cref="char"/>(</returns>
         public static IEnumerable<char> ToCharEnum(this IEnumerable<byte> src) => src.Select(x => (char)x);
-        /// <summary>
-        /// Convets a <see cref="Dictionary{TKey, TValue}"/> to a Enumerator of <see cref="ValueTuple"/>
-        /// </summary>
-        /// <returns>The Enumerator of <see cref="ValueTuple"/></returns>
+
         public static IEnumerable<(TKey key, TValue value)> ToTupleEnum<TKey, TValue>(this Dictionary<TKey, TValue> dict) => dict.Select(x => (x.Key, x.Value));
-        /// <summary>
-        /// Converts a Enumerator of <see cref="char"/> to a Enumerator of <see cref="byte"/> then calls <see cref="EndianStream(byte[])"/> via the implicit operator
-        /// </summary>
-        /// <returns>The new stream</returns>
+
         public static EndianStream ToEndianStream(this IEnumerable<char> src) => src.Select(x => (byte)x).ToArray();
 
         public static Type GetListType<T>(this List<T> _) => typeof(T);
+
+        public static T[] GetEnumValues<T>() where T : struct
+        {
+            return typeof(T).IsEnum ?
+                (T[])Enum.GetValues(typeof(T)) :
+                throw new ArgumentException("Type is not a Enum.");
+        }
     }
 
     public static class ConversionUtil
