@@ -39,9 +39,9 @@ namespace Takochu.smg.msg
 
     public class BMGMessage
     {
-        public readonly IEnumerable<MessageBase> MessageBases;
+        internal readonly IEnumerable<MessageBase> MessageBases;
 
-        public readonly string _Message;
+        internal readonly string _Message;
 
         public string[] Message;
 

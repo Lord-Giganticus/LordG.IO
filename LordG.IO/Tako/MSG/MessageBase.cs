@@ -23,7 +23,7 @@ namespace Takochu.smg.msg
             mCharacter = (ushort)cur;
         }
 
-        public Character() { }
+        internal Character() { }
 
         public override void Save(ref FileBase file)
         {
@@ -54,7 +54,7 @@ namespace Takochu.smg.msg
             return res is null;
         }
 
-        public ushort mCharacter;
+        public ushort mCharacter { get; set; }
     }
 
     public class SystemGroup : MessageBase
@@ -80,7 +80,7 @@ namespace Takochu.smg.msg
             }
         }
 
-        public SystemGroup() { }
+        internal SystemGroup() { }
 
         public override int CalcSize()
         {
@@ -105,13 +105,22 @@ namespace Takochu.smg.msg
 
         public static bool TryParse(string str, out SystemGroup res)
         {
-            res = null;
             var s = str.Substring(7).Trim(new char[']']);
+            try
+            {
+                res = new SystemGroup()
+                {
+                    mColor = Convert.ToInt16(s)
+                };
+            } catch
+            {
+                res = null;
+            }
             return res is null;
         }
 
-        public readonly ushort mType;
-        public short mColor;
+        public ushort mType { get; set; }
+        public short mColor { get; set; }
     }
 
     public class PictureGroup : MessageBase
@@ -143,9 +152,25 @@ namespace Takochu.smg.msg
             return $"[img={mCharIdx}]";
         }
 
-        public ushort mCharIdx;
-        public readonly ushort mFont;
-        public readonly ushort mCharID;
+        public static bool TryParse(string str, out PictureGroup res)
+        {
+            var s = str.Substring(5).Trim(new char[']']);
+            try
+            {
+                res = new PictureGroup()
+                {
+                    mCharIdx = Convert.ToUInt16(s)
+                };
+            } catch
+            {
+                res = null;
+            }
+            return res is null;
+        }
+
+        public ushort mCharIdx { get; set; }
+        public ushort mFont { get; set; }
+        public ushort mCharID { get; set; }
     }
 
     public class DisplayGroup : MessageBase
@@ -197,8 +222,24 @@ namespace Takochu.smg.msg
             return $"[wait={mFrames}]";
         }
 
-        public readonly ushort mType;
-        public ushort mFrames;
+        public static bool TryParse(string str, out DisplayGroup res)
+        {
+            var s = str.Substring(6).Trim(new char[']']);
+            try
+            {
+                res = new DisplayGroup()
+                {
+                    mFrames = Convert.ToUInt16(s)
+                };
+            } catch
+            {
+                res = null;
+            }
+            return res is null;
+        }
+
+        public ushort mType { get; set; }
+        public ushort mFrames { get; set; }
     }
 
     public class FontSizeGroup : MessageBase
@@ -208,6 +249,8 @@ namespace Takochu.smg.msg
             mFontSize = file.ReadUInt16();
             file.Skip(0x2);
         }
+
+        internal FontSizeGroup() { }
 
         public override void Save(ref FileBase file)
         {
@@ -227,7 +270,23 @@ namespace Takochu.smg.msg
             return $"[font={mFontSize}]";
         }
 
-        public ushort mFontSize;
+        public static bool TryParse(string str, out FontSizeGroup res)
+        {
+            var s = str.Substring(5).Trim(new char[']']);
+            try
+            {
+                res = new FontSizeGroup()
+                {
+                    mFontSize = Convert.ToUInt16(s)
+                };
+            } catch
+            {
+                res = null;
+            }
+            return res is null;
+        }
+
+        public ushort mFontSize { get; set; }
     }
 
     public class NumberGroup : MessageBase
@@ -246,6 +305,8 @@ namespace Takochu.smg.msg
                 mNumber = BitConverter.ToInt32(mData, 0);
             }
         }
+
+        internal NumberGroup() { }
 
         public override void Save(ref FileBase file)
         {
@@ -268,11 +329,27 @@ namespace Takochu.smg.msg
             return $"[value={mNumber}]";
         }
 
-        public readonly ushort mMaxWidth;
-        public readonly ushort mWidth;
-        public int mNumber;
+        public static bool TryParse(string str, out NumberGroup res)
+        {
+            var s = str.Substring(7).Trim(new char[']']);
+            try
+            {
+                res = new NumberGroup()
+                {
+                    mNumber = Convert.ToUInt16(s)
+                };
+            } catch
+            {
+                res = null;
+            }
+            return res is null;
+        }
 
-        public readonly byte[] mData;
+        public ushort mMaxWidth { get; set; }
+        public ushort mWidth { get; set; }
+        public int mNumber { get; set; }
+
+        public byte[] mData { get; set; }
     }
 
     public class SoundGroup : MessageBase
@@ -293,6 +370,8 @@ namespace Takochu.smg.msg
             mSoundID = str;
         }
 
+        internal SoundGroup() { }
+
         public override int CalcSize()
         {
             return 0x8 + (mSoundID.Length * 2);
@@ -303,7 +382,16 @@ namespace Takochu.smg.msg
             return $"[sound=\"{mSoundID}\"]";
         }
 
-        public string mSoundID;
+        public static void Parse(string str, out SoundGroup res)
+        {
+            var s = str.Substring(8).Trim(new char[']']).Replace("\"", "");
+            res = new SoundGroup()
+            {
+                mSoundID = s
+            };
+        }
+
+        public string mSoundID { get; set; }
     }
 
     public class LocalizeGroup : MessageBase
@@ -312,6 +400,8 @@ namespace Takochu.smg.msg
         {
             file.Skip(0x4);
         }
+
+        public LocalizeGroup() { }
 
         public override void Save(ref FileBase file)
         {
@@ -339,12 +429,14 @@ namespace Takochu.smg.msg
             mData = file.ReadBytes(count);
         }
 
+        public StringGroup() { }
+
         public override string ToString()
         {
             return $"[string]";
         }
 
-        public readonly byte[] mData;
+        public byte[] mData { get; set; }
     }
 
     public class RaceTimeGroup : MessageBase
@@ -354,11 +446,13 @@ namespace Takochu.smg.msg
             mType = file.ReadUInt16();
         }
 
+        public RaceTimeGroup() { }
+
         public override string ToString()
         {
             return mType == 5 ? "[current_time]" : "[best_time]";
         }
 
-        public ushort mType;
+        public ushort mType { get; set; }
     }
 }
