@@ -7,7 +7,9 @@ using Takochu.io;
 using LordG.IO.Properties;
 using LordG.IO;
 using Takochu.smg.msg;
+using LordG.IO.STB;
 using System.Linq;
+using System.IO;
 
 namespace Takochu.smg.msg
 {
@@ -68,6 +70,33 @@ namespace Takochu.smg.msg
             };
             Messages = new BMG(mem, Galaxy1);
             buf = fs.GetRootFile("messageid.tbl");
+            mem = new MemoryFile(buf)
+            {
+                mIsBigEndian = order is ByteOrder.BigEndian
+            };
+            BCSV.sHashTable = new Dictionary<int, string>();
+            foreach (var line in Resources.FieldNames.Split(new string[] { Environment.NewLine }, 0))
+                BCSV.AddHash(line);
+            BCSV tbl = new BCSV(mem);
+            foreach (BCSV.Entry e in tbl.mEntries)
+            {
+                MessageTable.Add(e.Get<string>("MessageId"), e.Get<int>("Index"));
+            }
+            tbl.Close();
+        }
+
+        public BMGNameHolder(RARC rarc, ByteOrder order, bool Galaxy1 = true)
+        {
+            var files = rarc.Files.Cast<RARC.FileEntry>().ToList();
+            if (files.Where(x => x.FileName is "message.bmg").ToArray().Length <= 0)
+                throw new FileNotFoundException();
+            var buf = files.Where(x => x.FileName is "message.bmg").First().FileData;
+            var mem = new MemoryFile(buf)
+            {
+                mIsBigEndian = order is ByteOrder.BigEndian
+            };
+            Messages = new BMG(mem, Galaxy1);
+            buf = files.Where(x => x.FileName is "messageid.tbl").First().FileData;
             mem = new MemoryFile(buf)
             {
                 mIsBigEndian = order is ByteOrder.BigEndian
