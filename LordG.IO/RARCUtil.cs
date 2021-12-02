@@ -33,5 +33,21 @@ namespace LordG.IO
         public static void SeekBegin(this BinaryDataReader reader, uint offset) => reader.Seek(offset, SeekOrigin.Begin);
 
         public static void SeekBegin(this BinaryDataReader reader, long offset) => reader.Seek(offset, SeekOrigin.Begin);
+
+        public static void SeekBegin(this BinaryDataWriter stream, uint offset) => stream.Seek(offset, SeekOrigin.Begin);
+
+        public static void SeekBegin(this BinaryDataWriter writer, long offset) => writer.Seek(offset, SeekOrigin.Begin);
+
+        public static void AlignBytes(this BinaryDataWriter writer, int alignment, byte value = 0x00)
+        {
+            var startPos = writer.Position;
+            long position = writer.Seek((-writer.Position % alignment + alignment) % alignment, SeekOrigin.Current);
+
+            writer.Seek(startPos, System.IO.SeekOrigin.Begin);
+            while (writer.Position != position)
+            {
+                writer.Write(value);
+            }
+        }
     }
 }

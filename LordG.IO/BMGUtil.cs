@@ -28,20 +28,12 @@ namespace Takochu.smg.msg
             }
         }
 
-        public static BMG Decompress(EndianStream src, ByteOrder order, bool dispose = false)
-        {
-            var mf = src.ToMemoryFile(order, dispose);
-            return new BMG(mf);
-        }
-
-        public static BMG Decompress(byte[] src, ByteOrder order) => Decompress(src, order, true);
-
         public static BMGMessage ToBMGMessage(this IEnumerable<MessageBase> src) => new BMGMessage(src);
     }
 
     public class BMGMessage
     {
-        internal readonly IEnumerable<MessageBase> MessageBases;
+        public readonly IEnumerable<MessageBase> MessageBaseEnum;
 
         internal readonly string _Message;
 
@@ -49,7 +41,7 @@ namespace Takochu.smg.msg
 
         public BMGMessage(IEnumerable<MessageBase> src)
         {
-            MessageBases = src;
+            MessageBaseEnum = src;
             _Message = string.Join(" ", src.Select(x => x.ToString()));
             Message = _Message.Split(new string[] { " " }, 0);
         }
@@ -85,7 +77,7 @@ namespace Takochu.smg.msg
             tbl.Close();
         }
 
-        public BMGNameHolder(RARC rarc, ByteOrder order, bool Galaxy1 = true)
+        public BMGNameHolder(ref RARC rarc, ByteOrder order, bool Galaxy1 = true)
         {
             var files = rarc.Files.Cast<RARC.FileEntry>().ToList();
             if (files.Where(x => x.FileName is "message.bmg").ToArray().Length <= 0)

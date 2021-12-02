@@ -162,6 +162,10 @@ namespace Takochu.smg.msg
 
         public List<INF1Entry> mEntries;
 
+        public const uint MagicLE = 0x494E4631;
+
+        public const uint MagicBE = 0x31464E49;
+
         public struct INF1Entry
         {
             public int Unknown;

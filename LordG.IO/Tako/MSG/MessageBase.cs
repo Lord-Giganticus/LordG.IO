@@ -14,6 +14,14 @@ namespace Takochu.smg.msg
             file.Write((short)0xE);
         }
         public virtual int CalcSize() { return 0; }
+
+        public virtual bool TryCastType<T>(out T res) where T : MessageBase
+        {
+            res = null;
+            if (this is T type)
+                res = type;
+            return res is null;
+        }
     }
 
     public class Character : MessageBase

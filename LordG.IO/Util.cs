@@ -23,6 +23,14 @@ namespace LordG.IO
                 (T[])Enum.GetValues(typeof(T)) :
                 throw new ArgumentException("Type is not a Enum.");
         }
+
+        public static void Fill<T>(this T[] originalArray, T with)
+        {
+            for (int i = 0; i < originalArray.Length; i++)
+            {
+                originalArray[i] = with;
+            }
+        }
     }
 
     public static class ConversionUtil

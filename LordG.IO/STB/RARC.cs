@@ -3,7 +3,7 @@ using Syroot.BinaryData;
 using LordG.IO;
 using System.Text;
 using System;
-using static LordG.IO.RARCUtil;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace LordG.IO.STB
@@ -86,6 +86,7 @@ namespace LordG.IO.STB
                 Offset = reader.ReadUInt32();
                 Size = reader.ReadUInt32();
             }
+            
         }
         public class DirectoryEntry : IDirectoryContainer
         {
@@ -125,6 +126,7 @@ namespace LordG.IO.STB
                 NodeCount = reader.ReadUInt16();
                 FirstNodeIndex = reader.ReadUInt32();
             }
+            
         }
         public enum RamAllocation
         {
@@ -188,7 +190,7 @@ namespace LordG.IO.STB
 
                     for (int n = 0; n < Directories[dir].NodeCount; n++)
                     {
-                        reader.SeekBegin( NodeOffset + ((n + Directories[dir].FirstNodeIndex) * 0x14));
+                        reader.SeekBegin(NodeOffset + ((n + Directories[dir].FirstNodeIndex) * 0x14));
                         FileEntry entry = new FileEntry();
                         entry.Read(reader, IsLittle);
                         NamePointer = StringTablOffset + entry.NameOffset;
