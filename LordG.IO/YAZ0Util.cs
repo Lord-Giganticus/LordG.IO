@@ -14,29 +14,40 @@ namespace LordG.IO
 
 		public const uint MagicBE = 0x307A6159;
 
-		public static void Decompress(ref EndianStream stream)
+		public static EndianStream Decompress(EndianStream stream, bool dispose = true)
         {
 			var buf = stream.ToArray();
 			Yaz0.Decompress(ref buf);
-			stream.Dispose();
-			stream = new EndianStream(buf);
+			if (dispose)
+				stream.Dispose();
+			return buf;
         }
 
-		public static void Compress(ref EndianStream stream)
+		public static EndianStream Compress(EndianStream stream, bool dispose = true)
         {
 			var buf = (byte[])stream;
-			buf = Yaz0.Compress(buf);
-			stream.Dispose();
-			stream = new EndianStream(buf);
+			if (dispose)
+				stream.Dispose();
+			return Yaz0.Compress(buf);
         }
 
-		public static bool CheckMagic(byte[] src, ByteOrder order)
+		public static bool TryGuessOrder(byte[] src, out ByteOrder order)
         {
 			using (EndianStream stream = src)
             {
+				order = EndianStream.CurrentEndian;
 				var num = stream.ReadUInt(order);
-				return num is MagicLE || num is MagicBE;
+				if (num is MagicBE || num is MagicLE)
+				{
+					switch (num)
+					{
+						case MagicBE: order = ByteOrder.BigEndian; break;
+						case MagicLE: order = ByteOrder.LittleEndian; break;
+					}
+					return true;
+				}
+				return false;
 			}
-        }
+		}
 	}
 }
