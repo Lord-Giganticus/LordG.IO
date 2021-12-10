@@ -16,18 +16,27 @@ namespace LordG.IO
             return (tup.key.Substring(1), tup.value);
         }
 
-        public const uint MagicLE = 0x52415243;
+        public const string MagicBE = "RARC";
 
-        public const uint MagicBE = 0x43524152;
+        public const string MagicLE = "CRAR";
 
-        public static void GetOrder(BinaryDataReader reader, out ByteOrder order)
+        public static bool TryGetOrder(byte[] src, out ByteOrder order)
         {
-            order = ByteOrder.BigEndian;
-            var sig = reader.ReadUInt32();
-            if (sig is MagicLE)
-                order = ByteOrder.LittleEndian;
-            else if (sig is MagicBE)
-                order = ByteOrder.BigEndian;
+            using (EndianStream stream = src)
+            {
+                order = EndianStream.CurrentEndian;
+                var str = new string(stream.ReadBytes(4).Select(x => (char)x).ToArray());
+                if (str is MagicBE || str is MagicLE)
+                {
+                    switch (str)
+                    {
+                        case MagicBE: order = ByteOrder.BigEndian; break;
+                        case MagicLE: order = ByteOrder.LittleEndian; break;
+                    }
+                    return true;
+                }
+                return false;
+            }
         }
 
         public static void SeekBegin(this BinaryDataReader reader, uint offset) => reader.Seek(offset, SeekOrigin.Begin);

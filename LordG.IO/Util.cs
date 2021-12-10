@@ -30,7 +30,7 @@ namespace LordG.IO
             {
                 originalArray[i] = with;
             }
-        }
+        } 
     }
 
     public static class ConversionUtil

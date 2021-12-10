@@ -38,7 +38,7 @@ namespace LordG.IO.STB
         #endregion
 
         #region Feilds
-        protected List<FileEntry> files = new List<FileEntry>();
+        public List<FileEntry> files = new List<FileEntry>();
         protected List<INode> nodes = new List<INode>();
         private uint HeaderSize = 32;
         private uint Unknown = 256;
@@ -142,14 +142,14 @@ namespace LordG.IO.STB
             files.Clear();
             using (var reader = new BinaryDataReader(stream, Encoding.ASCII, leaveOpen))
             {
-                reader.ByteOrder = ByteOrder.BigEndian;
-                IsLittle = false;
-                string signature = reader.ReadString(4, Encoding.ASCII);
-                if (signature == "CRAR")
+                var buf = reader.ReadBytes(4);
+                var check = RARCUtil.TryGetOrder(buf, out var order);
+                if (!check)
                 {
-                    IsLittle = true;
-                    reader.ByteOrder = ByteOrder.LittleEndian;
+                    throw new ArgumentException(nameof(stream));
                 }
+                IsLittle = order is ByteOrder.LittleEndian;
+                reader.ByteOrder = order;
                 uint FileSize = reader.ReadUInt32();
                 HeaderSize = reader.ReadUInt32();
                 uint DataOffset = reader.ReadUInt32();

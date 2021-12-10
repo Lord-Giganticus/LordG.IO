@@ -10,9 +10,7 @@ namespace LordG.IO
     public static class YAZ0Util
     {
 
-		public const uint MagicLE = 0x59617A30;
-
-		public const uint MagicBE = 0x307A6159;
+		public const string Magic = "Yaz0";
 
 		public static EndianStream Decompress(EndianStream stream, bool dispose = true)
         {
@@ -31,23 +29,11 @@ namespace LordG.IO
 			return Yaz0.Compress(buf);
         }
 
-		public static bool TryGuessOrder(byte[] src, out ByteOrder order)
+		public static bool CheckMagic(byte[] src)
         {
-			using (EndianStream stream = src)
-            {
-				order = EndianStream.CurrentEndian;
-				var num = stream.ReadUInt(order);
-				if (num is MagicBE || num is MagicLE)
-				{
-					switch (num)
-					{
-						case MagicBE: order = ByteOrder.BigEndian; break;
-						case MagicLE: order = ByteOrder.LittleEndian; break;
-					}
-					return true;
-				}
-				return false;
-			}
-		}
+			var data = src.Take(4).ToArray();
+			var str = new string(data.Select(x => (char)x).ToArray());
+			return str is Magic;
+        }
 	}
 }

@@ -15,27 +15,13 @@ namespace LordG.IO
 
     public static class SARC
     {
-        public const uint MagicLE = 0x53415243;
+        public const string Magic = "SARC";
 
-        public const uint MagicBE = 0x43524153;
-
-        public static bool TryGuessOrder(byte[] src, out ByteOrder order)
+        public static bool CheckMagic(byte[] src)
         {
-            using (EndianStream es = src)
-            {
-                order = EndianStream.CurrentEndian;
-                var num = es.ReadUInt(order);
-                if (num is MagicBE || num is MagicLE)
-                {
-                    switch (num)
-                    {
-                        case MagicBE: order = ByteOrder.BigEndian; break;
-                        case MagicLE: order = ByteOrder.LittleEndian; break;
-                    }
-                    return true;
-                }
-                return false;
-            }
+            var chars = src.Take(4).Select(x => (char)x).ToArray();
+            var str = new string(chars);
+            return str is Magic;
         }
 
         static bool Matches(this byte[] b, string str)
