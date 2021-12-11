@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Text;
-using Syroot.BinaryData;
-using System.Linq;
+﻿using System.Linq;
 
 namespace LordG.IO
 {
@@ -31,7 +26,7 @@ namespace LordG.IO
 
 		public static bool CheckMagic(byte[] src)
         {
-			var data = src.Take(4).ToArray();
+			var data = src.Take(4);
 			var str = new string(data.Select(x => (char)x).ToArray());
 			return str is Magic;
         }

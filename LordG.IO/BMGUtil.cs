@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using Syroot.BinaryData;
-using System.Xml;
 using Takochu.io;
 using LordG.IO.Properties;
 using LordG.IO;
-using Takochu.smg.msg;
 using LordG.IO.STB;
 using System.Linq;
 using System.IO;

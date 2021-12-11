@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Net;
-
-namespace Takochu.io
+﻿namespace Takochu.io
 {
     public class FileBase
     {
