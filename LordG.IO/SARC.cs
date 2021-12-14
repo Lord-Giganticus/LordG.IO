@@ -13,25 +13,20 @@ namespace LordG.IO
         public ByteOrder byteOrder;
         public bool HashOnly;
 
-        private Dictionary<string, EndianStream> GetBymls()
+        private BymlFileData[] GetBymls()
         {
-            var res = new Dictionary<string, EndianStream>();
+            var dict = new Dictionary<string, EndianStream>();
             KeyValuePair<string, EndianStream> change(KeyValuePair<string, byte[]> pair)
             {
                 return new KeyValuePair<string, EndianStream>(pair.Key, pair.Value);
             }
             foreach (var pair in Files.Change(change).Where(x => x.Key.EndsWith(".byml")))
-                res.Add(pair);
-            return res;
-        }
-
-        private BymlFileData[] GetBymls(Dictionary<string, EndianStream> dict)
-        {
+                dict.Add(pair);
             var datas = dict.Values;
             return datas.Select(x => ByamlFile.LoadN(x)).ToArray();
         }
 
-        public static implicit operator BymlFileData[](SarcData sarc) => sarc.GetBymls(sarc.GetBymls());
+        public static implicit operator BymlFileData[](SarcData sarc) => sarc.GetBymls();
     }
 
     public static class SARC

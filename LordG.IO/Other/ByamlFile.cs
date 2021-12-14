@@ -7,6 +7,7 @@ using System.Text;
 using Syroot.BinaryData;
 using Syroot.Maths;
 using System.Diagnostics;
+using LordG.IO;
 
 namespace LordG.IO.Other
 {
@@ -22,8 +23,8 @@ namespace LordG.IO.Other
             return YamlByamlConverter.ToYaml(this);
         }
 
-        public static implicit operator BymlFileData(FileInfo file) 
-            => YamlByamlConverter.FromYaml(File.ReadAllText(file.FullName));
+        public static implicit operator BymlFileData(YmlFile file) 
+            => YamlByamlConverter.FromYaml(file.ReadAllText());
     }
 
     /// <summary>
