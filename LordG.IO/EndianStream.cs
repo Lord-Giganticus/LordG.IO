@@ -42,6 +42,11 @@ namespace LordG.IO
         /// </summary>
         /// <exception cref="FileNotFoundException"></exception>
         public EndianStream(FileInfo file) : this(file.Exists ? file.OpenRead() : throw new FileNotFoundException(), true) { }
+
+        ~EndianStream()
+        {
+            Dispose();
+        }
         #endregion
 
         #region Reading Funcs

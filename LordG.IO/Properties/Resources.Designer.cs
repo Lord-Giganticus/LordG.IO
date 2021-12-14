@@ -61,6 +61,74 @@ namespace LordG.IO.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to HA
+        ///Net
+        ///Bag
+        ///SSAO
+        ///None
+        ///cATM
+        ///mDeco
+        ///cPost
+        ///Npc02
+        ///XLink
+        ///Slope
+        ///mWall
+        ///squ13
+        ///cTalk
+        ///ant00
+        ///Npc01
+        ///Npc00
+        ///Mouth
+        ///SSSSS
+        ///Npc03
+        ///cat00
+        ///mFloor
+        ///mMusic
+        ///ImmQ_3
+        ///Coffee
+        ///Camera
+        ///Office
+        ///ImmQ_2
+        ///mParams
+        ///cNormal
+        ///WorldAo
+        ///Invalid
+        ///mCommon
+        ///Airport
+        ///cDefault
+        ///Bridge04
+        ///Museum02
+        ///MiniGame
+        ///Tailor01
+        ///NpcColor
+        ///Tailor00
+        ///Player00
+        ///Player01
+        ///Market01
+        ///Museum00
+        ///Market02
+        ///Museum01
+        ///FtrActor
+        ///Bridge05
+        ///Bridge03
+        ///Market00
+        ///EnvParam
+        ///NetConfig
+        ///TreeParam
+        ///MainField
+        ///AreaParam
+        ///mFanParam
+        ///cFishBait
+        ///cItemMenu
+        ///CapsuleA [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string ACNHBYML {
+            get {
+                return ResourceManager.GetString("ACNHBYML", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 16x9
         ///1stDamage
         ///2DWater

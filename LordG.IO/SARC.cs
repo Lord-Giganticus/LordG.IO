@@ -3,14 +3,35 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using Syroot.BinaryData;
+using LordG.IO.Other;
 
 namespace LordG.IO
 {
-    public class SarcData
+    public struct SarcData
     {
         public Dictionary<string, byte[]> Files;
         public ByteOrder byteOrder;
         public bool HashOnly;
+
+        private Dictionary<string, EndianStream> GetBymls()
+        {
+            var res = new Dictionary<string, EndianStream>();
+            KeyValuePair<string, EndianStream> change(KeyValuePair<string, byte[]> pair)
+            {
+                return new KeyValuePair<string, EndianStream>(pair.Key, pair.Value);
+            }
+            foreach (var pair in Files.Change(change).Where(x => x.Key.EndsWith(".byml")))
+                res.Add(pair);
+            return res;
+        }
+
+        private BymlFileData[] GetBymls(Dictionary<string, EndianStream> dict)
+        {
+            var datas = dict.Values;
+            return datas.Select(x => ByamlFile.LoadN(x)).ToArray();
+        }
+
+        public static implicit operator BymlFileData[](SarcData sarc) => sarc.GetBymls(sarc.GetBymls());
     }
 
     public static class SARC

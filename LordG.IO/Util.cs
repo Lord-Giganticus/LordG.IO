@@ -31,6 +31,33 @@ namespace LordG.IO
                 originalArray[i] = with;
             }
         } 
+
+        public static T[] FilledArray<T>(T item, int size)
+        {
+            var res = new T[size];
+            for (int i = 0; i < size; i++)
+                res[i] = item;
+            return res;
+        }
+
+        public static Dictionary<TKey, TValue> Change<TKey, TValue, TKeyO, TValueO>(this Dictionary<TKeyO, TValueO> dict, Func<KeyValuePair<TKeyO, TValueO>, KeyValuePair<TKey, TValue>> action)
+        {
+            var res = new Dictionary<TKey, TValue>();
+            foreach (var pair in dict)
+                res.Add(action.Invoke(pair));
+            return res;
+        }
+
+        public static void ForEach<TKey, TValue>(this Dictionary<TKey, TValue> dict, Action<KeyValuePair<TKey, TValue>> action)
+        {
+            foreach (var pair in dict)
+                action.Invoke(pair);
+        }
+
+        public static void Add<TKey,TValue>(this Dictionary<TKey, TValue> dict, KeyValuePair<TKey, TValue> pair)
+        {
+            dict.Add(pair.Key, pair.Value);
+        }
     }
 
     public static class ConversionUtil
