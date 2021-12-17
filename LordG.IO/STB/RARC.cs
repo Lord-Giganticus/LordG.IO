@@ -42,7 +42,7 @@ namespace LordG.IO.STB
         private uint Unknown = 256;
         public bool IsLittle { get; internal set; } = BitConverter.IsLittleEndian;
         public RamAllocation RamType = RamAllocation.MRAM;
-        private DirectoryEntry[] Directories;
+        public DirectoryEntry[] Directories;
         #endregion
 
         #region Sub Types
