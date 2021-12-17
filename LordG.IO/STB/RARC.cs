@@ -57,7 +57,7 @@ namespace LordG.IO.STB
 
             internal uint Size;
             internal uint Offset;
-            internal ushort NameOffset;
+            public ushort NameOffset;
 
             internal long _dataOffsetPos;
             public INode Parent { get; set; }
