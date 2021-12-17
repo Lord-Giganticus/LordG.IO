@@ -95,7 +95,7 @@ namespace LordG.IO.STB
             public RARC ParentArchive { get; }
 
             public uint Identifier;
-            internal uint NameOffset; //Relative to string table
+            public uint NameOffset; //Relative to string table
             public ushort Hash { get; set; }
             public ushort NodeCount;
             public uint FirstNodeIndex { get; set; }
