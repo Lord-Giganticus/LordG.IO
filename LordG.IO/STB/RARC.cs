@@ -49,11 +49,11 @@ namespace LordG.IO.STB
         public class FileEntry : INode
         {
             public string Name { get; set; }
-            public bool IsDirectory { get { return (Flags & 2) >> 1 == 1; } }
+            public bool IsDirectory { get { return (((byte)Flags) & 2) >> 1 == 1; } }
 
             public ushort FileId { get; set; }
             public ushort Hash { get; set; }
-            public byte Flags { get; set; }
+            public FileAttribute Flags { get; set; } = FileAttribute.FILE | FileAttribute.PRELOAD_TO_MRAM;
 
             internal uint Size;
             internal uint Offset;
@@ -72,11 +72,11 @@ namespace LordG.IO.STB
                 {
                     NameOffset = reader.ReadUInt16();
                     reader.Seek(1); //Padding
-                    Flags = reader.ReadByte();
+                    Flags = (FileAttribute)reader.ReadByte();
                 }
                 else
                 {
-                    Flags = reader.ReadByte();
+                    Flags = (FileAttribute)reader.ReadByte();
                     reader.Seek(1); //Padding
                     NameOffset = reader.ReadUInt16();
                 }
@@ -131,6 +131,18 @@ namespace LordG.IO.STB
             None,
             ARAM,
             MRAM,
+        }
+
+        [Flags]
+        public enum FileAttribute
+        {
+            FILE = 0x01,
+            DIRECTORY = 0x02,
+            COMPRESSED = 0x04,
+            PRELOAD_TO_MRAM = 0x10,
+            PRELOAD_TO_ARAM = 0x20,
+            LOAD_FROM_DVD = 0x40,
+            YAZ0_COMPRESSED = 0x80
         }
         #endregion
 
