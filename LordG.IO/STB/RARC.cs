@@ -39,7 +39,7 @@ namespace LordG.IO.STB
         public List<FileEntry> files = new List<FileEntry>();
         protected List<INode> nodes = new List<INode>();
         protected uint HeaderSize = 32;
-        private uint Unknown = 256;
+        protected uint Unknown = 256;
         public bool IsLittle { get; internal set; } = BitConverter.IsLittleEndian;
         public RamAllocation RamType = RamAllocation.MRAM;
         public DirectoryEntry[] Directories;
