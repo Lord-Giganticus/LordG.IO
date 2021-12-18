@@ -59,7 +59,7 @@ namespace LordG.IO.STB
             internal uint Offset;
             public ushort NameOffset;
 
-            internal long _dataOffsetPos;
+            public long _dataOffsetPos;
             public INode Parent { get; set; }
             public byte[] FileData { get; set; }
             public string FileName { get; set; }
