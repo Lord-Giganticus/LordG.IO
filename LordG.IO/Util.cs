@@ -4,6 +4,7 @@ using System;
 using Syroot.BinaryData;
 using System.Text;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace LordG.IO
 {
@@ -79,6 +80,18 @@ namespace LordG.IO
         {
             while (FS.Position % Multiple != 0)
                 FS.Write(Padding);
+        }
+
+        public unsafe static TNum Reverse<TNum>(this TNum num) where TNum : unmanaged
+        {
+            byte[] buf = new byte[EndianReader.SizeOf<TNum>()];
+            Unsafe.WriteUnaligned(ref buf[0], num);
+            Array.Reverse(buf);
+            fixed (byte* ptr = buf)
+            {
+                TNum* res = (TNum*)ptr;
+                return *res;
+            }
         }
     }
 }

@@ -378,8 +378,6 @@ namespace LordG.IO
         /// <inheritdoc cref="IsLittleEndian"/>
         /// </summary>
         public static readonly ByteOrder CurrentEndian = IsLittleEndian ? ByteOrder.LittleEndian : ByteOrder.BigEndian;
-
-        internal static FileInfo LoadedFile { get; private set; }
         #endregion
     }
 }

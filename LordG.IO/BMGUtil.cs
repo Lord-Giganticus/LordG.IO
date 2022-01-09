@@ -4,7 +4,6 @@ using Syroot.BinaryData;
 using Takochu.io;
 using LordG.IO.Properties;
 using LordG.IO;
-using LordG.IO.STB;
 using System.Linq;
 using System.IO;
 
@@ -74,21 +73,21 @@ namespace Takochu.smg.msg
             tbl.Close();
         }
 
-        public BMGNameHolder(ref RARC rarc, ByteOrder order, bool Galaxy1 = true)
+        public BMGNameHolder(ref RARC rarc, bool Galaxy1 = true)
         {
-            var files = rarc.Files.Cast<RARC.FileEntry>().ToList();
-            if (files.Where(x => x.FileName is "message.bmg").ToArray().Length <= 0)
+            var files = rarc.Files;
+            if (files.Where(x => x.Name is "message.bmg").ToArray().Length <= 0)
                 throw new FileNotFoundException();
-            var buf = files.Where(x => x.FileName is "message.bmg").First().FileData;
+            var buf = files.Where(x => x.Name is "message.bmg").First().Data;
             var mem = new MemoryFile(buf)
             {
-                mIsBigEndian = order is ByteOrder.BigEndian
+                mIsBigEndian = rarc.Endian is ByteOrder.BigEndian
             };
             Messages = new BMG(mem, Galaxy1);
-            buf = files.Where(x => x.FileName is "messageid.tbl").First().FileData;
+            buf = files.Where(x => x.Name is "messageid.tbl").First().Data;
             mem = new MemoryFile(buf)
             {
-                mIsBigEndian = order is ByteOrder.BigEndian
+                mIsBigEndian = rarc.Endian is ByteOrder.BigEndian
             };
             BCSV.sHashTable = new Dictionary<int, string>();
             foreach (var line in Resources.FieldNames.Split(new string[] { Environment.NewLine }, 0))
