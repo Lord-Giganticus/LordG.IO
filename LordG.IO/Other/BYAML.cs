@@ -30,7 +30,7 @@ namespace LordG.IO.Other
             return true;
         }
 
-        private static new Dictionary<uint, string> hashes = new Dictionary<uint, string>();
+        private static readonly Dictionary<uint, string> hashes = new Dictionary<uint, string>();
 
         public static Dictionary<uint, string> Hashes
         {
