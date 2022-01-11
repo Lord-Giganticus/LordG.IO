@@ -73,5 +73,8 @@ namespace LordG.IO
         {
             return new SeekTask(BaseStream, pos, origin);
         }
+
+        public static implicit operator EndianWriter(Stream stream) =>
+            new EndianWriter(stream, false);
     }
 }
