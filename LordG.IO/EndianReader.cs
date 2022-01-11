@@ -128,7 +128,7 @@ namespace LordG.IO
 
         public void SeekBegin(long pos) => Seek(pos, SeekOrigin.Begin);
 
-        public static implicit operator EndianReader(Stream stream) =>
+        public static explicit operator EndianReader(Stream stream) =>
             new EndianReader(stream, false);
     }
 }
