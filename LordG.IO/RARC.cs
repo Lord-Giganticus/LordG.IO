@@ -94,7 +94,7 @@ namespace LordG.IO
                 NameOffset = reader.ReadNumeric<uint>();
                 Hash = reader.ReadNumeric<ushort>();
                 NodeCount = reader.ReadNumeric<ushort>();
-                FirstNodeOffset = reader.ReadNumeric<ushort>();
+                FirstNodeOffset = reader.ReadNumeric<uint>();
             }
         }
 
