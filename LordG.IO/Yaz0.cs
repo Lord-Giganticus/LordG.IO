@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace LordG.IO
 {
-    internal static class Yaz0
+    public static class Yaz0
     {
 		public static void Decompress(ref byte[] data)
 		{

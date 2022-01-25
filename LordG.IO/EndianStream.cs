@@ -2,7 +2,6 @@
 using System.IO;
 using System.Text;
 using Syroot.BinaryData;
-using Takochu.io;
 
 namespace LordG.IO
 {
@@ -350,21 +349,6 @@ namespace LordG.IO
         protected virtual BinaryDataReader ToReader() => new BinaryDataReader(this, true);
 
         protected virtual BinaryDataWriter ToWriter() => new BinaryDataWriter(this, true);
-
-        #endregion
-
-        #region Other Methods
-
-        public virtual MemoryFile ToMemoryFile(ByteOrder order, bool dispose = false)
-        {
-            var mf = new MemoryFile((byte[])this)
-            {
-                mIsBigEndian = order is ByteOrder.BigEndian
-            };
-            if (dispose)
-                Dispose();
-            return mf;
-        }
 
         #endregion
 

@@ -69,6 +69,12 @@ namespace LordG.IO
             Write(buf);
         }
 
+        public void WriteStructs<TStruct>(TStruct[] values) where TStruct : struct
+        {
+            for (int i = 0; i < values.Length; i++)
+                WriteStruct(values[i]);
+        }
+
         public SeekTask TempSeek(long pos, SeekOrigin origin)
         {
             return new SeekTask(BaseStream, pos, origin);
