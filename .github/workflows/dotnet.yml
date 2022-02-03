@@ -20,3 +20,5 @@ jobs:
         NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}  
     - name: Build
       run: dotnet publish --configuration Release
+    - name: Publish
+      run: dotnet nuget push "bin/Release/LordG.IO.1.0.0.nupkg"
