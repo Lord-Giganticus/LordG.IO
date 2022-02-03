@@ -3,7 +3,20 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Authors>Lord-Giganticus</Authors>
+    <PackageProjectUrl>https://github.com/Lord-Giganticus/LordG.IO</PackageProjectUrl>
+    <Description>A Library for various formats from the Wii, Wii U, and Switch Era</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/Lord-Giganticus/LordG.IO</RepositoryUrl>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
 	  <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />

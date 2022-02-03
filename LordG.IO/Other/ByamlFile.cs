@@ -6,8 +6,6 @@ using System.Linq;
 using System.Text;
 using Syroot.BinaryData;
 using Syroot.Maths;
-using System.Diagnostics;
-using LordG.IO;
 
 namespace LordG.IO.Other
 {
