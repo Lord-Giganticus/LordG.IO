@@ -1,12 +1,11 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using Syroot.BinaryData;
 
 namespace LordG.IO
 {
     /// <summary>
-    /// A Stream that allows reading of data in any Endian Byte Order. Inherits <see cref="MemoryStream"/>
+    /// A Stream that makes passing the data to higher types better. Inherits <see cref="MemoryStream"/>
     /// </summary>
     public class EndianStream : MemoryStream
     {
@@ -46,262 +45,6 @@ namespace LordG.IO
         {
             Dispose();
         }
-        #endregion
-
-        #region Reading Funcs
-
-        #region Int Reading
-
-        #region Unsigned
-
-        public ushort ReadUShort(ByteOrder order)
-        {
-            long pos = Position;
-            using (BinaryDataReader reader = this)
-            {
-                reader.ByteOrder = order;
-                reader.Position = pos;
-                return reader.ReadUInt16();
-            }
-        }
-
-        public uint ReadUInt(ByteOrder order)
-        {
-            long pos = Position;
-            using (BinaryDataReader reader = this)
-            {
-                reader.ByteOrder = order;
-                reader.Position = pos;
-                return reader.ReadUInt32();
-            }
-        }
-
-        public ulong ReadULong(ByteOrder order)
-        {
-            long pos = Position;
-            using (BinaryDataReader reader = this)
-            {
-                reader.ByteOrder = order;
-                reader.Position = pos;
-                return reader.ReadUInt64();
-            }
-        }
-
-        #endregion
-
-        #region Signed
-
-        public short ReadShort(ByteOrder order)
-        {
-            long pos = Position;
-            using (BinaryDataReader reader = this)
-            {
-                reader.ByteOrder = order;
-                reader.Position = pos;
-                return reader.ReadInt16();
-            }
-        }
-
-        public int ReadInt(ByteOrder order)
-        {
-            long pos = Position;
-            using (BinaryDataReader reader = this)
-            {
-                reader.ByteOrder = order;
-                reader.Position = pos;
-                return reader.ReadInt32();
-            }
-        }
-
-        public long ReadLong(ByteOrder order)
-        {
-            long pos = Position;
-            using (BinaryDataReader reader = this)
-            {
-                reader.ByteOrder = order;
-                reader.Position = pos;
-                return reader.ReadInt64();
-            }
-        }
-
-        #endregion
-
-        #endregion
-
-        #region Float Reading
-
-        public float ReadFloat(ByteOrder order)
-        {
-            var pos = Position;
-            using (BinaryDataReader reader = this)
-            {
-                reader.ByteOrder = order;
-                reader.Position = pos;
-                return reader.ReadSingle();
-            }
-        }
-
-        public double ReadDouble(ByteOrder order)
-        {
-            var pos = Position;
-            using (BinaryDataReader reader = this)
-            {
-                reader.ByteOrder = order;
-                reader.Position = pos;
-                return reader.ReadDouble();
-            }
-        }
-
-        #endregion
-
-        public string ReadString(Encoding encoder, int length)
-        {
-            var pos = Position;
-            using (BinaryDataReader reader = this)
-            {
-                reader.Position = pos;
-                return reader.ReadString(length, encoder);
-            }
-        }
-
-        public byte[] ReadBytes(int count)
-        {
-            var pos = Position;
-            using (BinaryDataReader reader = this)
-            {
-                reader.Position = pos;
-                return reader.ReadBytes(count);
-            }
-        }
-
-        #endregion
-
-        #region Writing Funcs
-
-        #region Int Writing
-
-        #region Unsigned
-
-        public void WriteUShort(ushort value, ByteOrder order)
-        {
-            var pos = Position;
-            using (BinaryDataWriter writer = this)
-            {
-                writer.Position = pos;
-                writer.ByteOrder = order;
-                writer.Write(value);
-            }
-        }
-
-        public void WriteUInt(uint value, ByteOrder order)
-        {
-            var pos = Position;
-            using (BinaryDataWriter writer = this)
-            {
-                writer.Position = pos;
-                writer.ByteOrder = order;
-                writer.Write(value);
-            }
-        }
-
-        public void WriteULong(ulong value, ByteOrder order)
-        {
-            var pos = Position;
-            using (BinaryDataWriter writer = this)
-            {
-                writer.Position = pos;
-                writer.ByteOrder = order;
-                writer.Write(value);
-            }
-        }
-
-        #endregion
-
-        #region Signed
-
-        public void WriteShort(short value, ByteOrder order)
-        {
-            var pos = Position;
-            using (BinaryDataWriter writer = this)
-            {
-                writer.Position = pos;
-                writer.ByteOrder = order;
-                writer.Write(value);
-            }
-        }
-
-        public void WriteInt(int value, ByteOrder order)
-        {
-            var pos = Position;
-            using (BinaryDataWriter writer = this)
-            {
-                writer.Position = pos;
-                writer.ByteOrder = order;
-                writer.Write(value);
-            }
-        }
-
-        public void WriteLong(long value, ByteOrder order)
-        {
-            var pos = Position;
-            using (BinaryDataWriter writer = this)
-            {
-                writer.Position = pos;
-                writer.ByteOrder = order;
-                writer.Write(value);
-            }
-        }
-
-        #endregion
-
-        #endregion
-
-        #region Float Writing
-
-        public void WriteFloat(float value, ByteOrder order)
-        {
-            var pos = Position;
-            using (BinaryDataWriter writer = this)
-            {
-                writer.Position = pos;
-                writer.ByteOrder = order;
-                writer.Write(value);
-            }
-        }
-
-        public void WriteDouble(double value, ByteOrder order)
-        {
-            var pos = Position;
-            using (BinaryDataWriter writer = this)
-            {
-                writer.Position = pos;
-                writer.ByteOrder = order;
-                writer.Write(value);
-            }
-        }
-
-        #endregion
-
-        public void WriteString(string str, Encoding encoding)
-        {
-            var pos = Position;
-            using (BinaryDataWriter writer = this)
-            {
-                writer.Position = pos;
-                writer.Write(str, (BinaryStringFormat)5, encoding);
-            }
-        }
-
-        public void WriteBytes(byte[] src)
-        {
-            var pos = Position;
-            using (BinaryDataWriter writer = this)
-            {
-                writer.Position = pos;
-                writer.Write(src);
-            }
-        }
-
         #endregion
 
         #region Castings
@@ -346,9 +89,9 @@ namespace LordG.IO
 
         #region Protected Methods
 
-        protected virtual BinaryDataReader ToReader() => new BinaryDataReader(this, true);
+        protected virtual BinaryDataReader ToReader() => new BinaryDataReader(this, false);
 
-        protected virtual BinaryDataWriter ToWriter() => new BinaryDataWriter(this, true);
+        protected virtual BinaryDataWriter ToWriter() => new BinaryDataWriter(this, false);
 
         #endregion
 

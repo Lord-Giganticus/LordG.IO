@@ -29,20 +29,15 @@ namespace LordG.IO
         internal unsafe static byte[] GetNumericBytes<TNum>(TNum number) where TNum : unmanaged
         {
             byte[] res = new byte[SizeOf<TNum>()];
-            fixed (TNum* numptr = &Unsafe.AsRef(number))
-            {
-                Marshal.Copy((IntPtr)numptr, res, 0, res.Length);
-            }
+            Unsafe.As<byte, TNum>(ref res[0]) = number;
             return res;
         }
 
-        internal unsafe static byte[] GetStructBytes<TStruct>(TStruct value) where TStruct : struct
+        internal static byte[] GetStructBytes<TStruct>(TStruct value) where TStruct : struct
         {
             byte[] res = new byte[Unsafe.SizeOf<TStruct>()];
-            fixed (byte* ptr = res)
-            {
-                Unsafe.Copy(ptr, ref value);
-            }
+            var ptr = Marshal.UnsafeAddrOfPinnedArrayElement(res, 0);
+            Marshal.StructureToPtr(value, ptr, false);
             return res;
         }
 
@@ -81,5 +76,52 @@ namespace LordG.IO
 
         public static explicit operator EndianWriter(Stream stream) =>
             new EndianWriter(stream, false);
+
+        #region Overrides
+        public override void Write(decimal value)
+        {
+            WriteNumeric(value);
+        }
+
+        public override void Write(double value)
+        {
+            WriteNumeric(value);
+        }
+
+        public override void Write(float value)
+        {
+            WriteNumeric(value);
+        }
+
+        public override void Write(int value)
+        {
+            WriteNumeric(value);
+        }
+
+        public override void Write(long value)
+        {
+            WriteNumeric(value);
+        }
+
+        public override void Write(short value)
+        {
+            WriteNumeric(value);
+        }
+
+        public override void Write(uint value)
+        {
+            WriteNumeric(value);
+        }
+
+        public override void Write(ulong value)
+        {
+            WriteNumeric(value);
+        }
+
+        public override void Write(ushort value)
+        {
+            WriteNumeric(value);
+        }
+        #endregion
     }
 }

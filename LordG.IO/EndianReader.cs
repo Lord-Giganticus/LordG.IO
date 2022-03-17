@@ -4,6 +4,7 @@ using System.Text;
 using System;
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace LordG.IO
 {
@@ -27,20 +28,15 @@ namespace LordG.IO
 
         public EndianReader(Stream stream, Encoding encoding, bool leaveopen) : base(stream, encoding, leaveopen) { }
 
-        internal static unsafe TNum ReadNumeric<TNum>(ref byte[] arr) where TNum : unmanaged
+        internal static TNum ReadNumeric<TNum>(ref byte[] arr) where TNum : unmanaged
         {
-            fixed (byte* ptr = arr)
-            {
-                return *(TNum*)ptr;
-            }
+            return Unsafe.As<byte, TNum>(ref arr[0]);
         }
 
-        internal static unsafe TStruct ReadStruct<TStruct>(ref byte[] arr) where TStruct : struct
+        internal static TStruct ReadStruct<TStruct>(ref byte[] arr) where TStruct : struct
         {
-            fixed (byte* ptr = arr)
-            {
-                return Unsafe.Read<TStruct>(ptr);
-            }
+            var ptr = Marshal.UnsafeAddrOfPinnedArrayElement(arr, 0);
+            return Marshal.PtrToStructure<TStruct>(ptr);
         }
 
         internal static unsafe int SizeOf<TNum>() where TNum : unmanaged
@@ -130,5 +126,52 @@ namespace LordG.IO
 
         public static explicit operator EndianReader(Stream stream) =>
             new EndianReader(stream, false);
+
+        #region Overrides
+        public override decimal ReadDecimal()
+        {
+            return ReadNumeric<decimal>();
+        }
+
+        public override double ReadDouble()
+        {
+            return ReadNumeric<double>();
+        }
+
+        public override short ReadInt16()
+        {
+            return ReadNumeric<short>();
+        }
+
+        public override int ReadInt32()
+        {
+            return ReadNumeric<int>();
+        }
+
+        public override long ReadInt64()
+        {
+            return ReadNumeric<long>();
+        }
+
+        public override float ReadSingle()
+        {
+            return ReadNumeric<float>();
+        }
+
+        public override ushort ReadUInt16()
+        {
+            return ReadNumeric<ushort>();
+        }
+
+        public override uint ReadUInt32()
+        {
+            return ReadNumeric<uint>();
+        }
+
+        public override ulong ReadUInt64()
+        {
+            return ReadNumeric<ulong>();
+        }
+        #endregion
     }
 }
