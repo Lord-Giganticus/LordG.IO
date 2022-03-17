@@ -16,5 +16,5 @@ This Library takes code from other C# Repos in order to provide useable code.
 * `EndianStream` reworked to promote using `EndianReader` and `EndianWriter` more.
 
 # Downloading
-You can always find the latest nuget package on the [pakages](https://github.com/Lord-Giganticus/LordG.IO/packages/1233326) page.<br>
+You can always find the latest nuget package on the [packages](https://github.com/Lord-Giganticus/LordG.IO/packages/1233326) page.<br>
 It's more recommended to just download the package and add it as a nuger source via file path than try to add the web link
