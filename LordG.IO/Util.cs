@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace LordG.IO
 {
@@ -31,6 +34,25 @@ namespace LordG.IO
                 res.Add(func(item));
             }
             return res;
+        }
+
+        /// <summary>
+        /// Converts ANY valid object into a byte array. This can have undefined behavior on certain types.
+        /// </summary>
+        /// <typeparam name="T">The Type to use.</typeparam>
+        /// <param name="any">The object to convert.</param>
+        /// <returns><typeparamref name="T"/> represented as a <see cref="byte"/>[].</returns>
+        public static byte[] ToBytes<T>(this T any)
+        {
+            byte[] output = new byte[Unsafe.SizeOf<T>()];
+            Unsafe.As<byte, T>(ref output[0]) = any;
+            return output;
+        }
+
+        public static IntPtr AsPtr<T>(this T any)
+        {
+            byte[] buf = any.ToBytes();
+            return Marshal.UnsafeAddrOfPinnedArrayElement(buf, 0);
         }
     }
 }

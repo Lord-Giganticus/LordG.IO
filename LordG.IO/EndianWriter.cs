@@ -26,7 +26,7 @@ namespace LordG.IO
         internal static int SizeOf<TNum>() where TNum : unmanaged =>
             EndianReader.SizeOf<TNum>();
 
-        internal unsafe static byte[] GetNumericBytes<TNum>(TNum number) where TNum : unmanaged
+        internal static byte[] GetNumericBytes<TNum>(TNum number) where TNum : unmanaged
         {
             byte[] res = new byte[SizeOf<TNum>()];
             Unsafe.As<byte, TNum>(ref res[0]) = number;
