@@ -21,4 +21,4 @@ jobs:
     - name: Build
       run: dotnet publish --configuration Release
     - name: Publish
-      run: dotnet nuget push "LordG.IO/bin/Release/LordG.IO.1.0.1.nupkg" --skip-duplicate
+      run: dotnet nuget push "LordG.IO/bin/Release/LordG.IO.1.0.2.nupkg" --skip-duplicate
