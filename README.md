@@ -14,6 +14,8 @@ This Library takes code from other C# Repos in order to provide useable code.
 * `EndianReader` and `EndianWriter` no longer have unsafe methods internally.
 * `EndianReader` and `EndianWriter` now override most methods from `BinaryReader` and `BinaryWriter`.
 * `EndianStream` reworked to promote using `EndianReader` and `EndianWriter` more.
+## 1.0.2
+* Removed useless unsafe from internal `EndianWriter` method and 2 methods to `Util`
 
 # Downloading
 You can always find the latest nuget package on the [packages](https://github.com/Lord-Giganticus/LordG.IO/packages/1233326) page.<br>
