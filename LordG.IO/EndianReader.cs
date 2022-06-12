@@ -18,7 +18,7 @@ namespace LordG.IO
 
         public long Position => BaseStream.Position;
 
-        public static readonly Encoding Default = Encoding.UTF8;
+        public static Encoding Default => Encoding.UTF8;
 
         public EndianReader(Stream stream) : base(stream) { }
 
@@ -39,8 +39,8 @@ namespace LordG.IO
             return Marshal.PtrToStructure<TStruct>(ptr);
         }
 
-        internal static unsafe int SizeOf<TNum>() where TNum : unmanaged
-            => sizeof(TNum);
+        internal static int SizeOf<TNum>() where TNum : unmanaged
+            => Unsafe.SizeOf<TNum>();
 
         public TNum ReadNumeric<TNum>() where TNum : unmanaged
         {
@@ -61,6 +61,8 @@ namespace LordG.IO
         public TStruct ReadStruct<TStruct>() where TStruct : struct
         {
             var buf = ReadBytes(Unsafe.SizeOf<TStruct>());
+            if (Reverse)
+                Array.Reverse(buf);
             return ReadStruct<TStruct>(ref buf);
         }
 
@@ -74,10 +76,8 @@ namespace LordG.IO
 
         public byte[] ToArray()
         {
-            using (EndianStream stream = new EndianStream(BaseStream))
-            {
-                return (byte[])stream;
-            }
+            using EndianStream stream = new EndianStream(BaseStream);
+            return (byte[])stream;
         }
 
         public SeekTask TempSeek(long offset, SeekOrigin origin)

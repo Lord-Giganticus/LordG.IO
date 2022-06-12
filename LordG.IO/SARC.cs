@@ -16,7 +16,8 @@ namespace LordG.IO
         private BymlFileData[] GetBymls()
         {
             var dict = new Dictionary<string, EndianStream>();
-            KeyValuePair<string, EndianStream> change(KeyValuePair<string, byte[]> pair)
+
+            static KeyValuePair<string, EndianStream> change(KeyValuePair<string, byte[]> pair)
             {
                 return new KeyValuePair<string, EndianStream>(pair.Key, pair.Value);
             }

@@ -70,10 +70,8 @@ namespace LordG.IO.Other
         /// <param name="byteOrder">The <see cref="ByteOrder"/> to read data in.</param>
         public static BymlFileData LoadN(string fileName, bool supportPaths = false, ByteOrder byteOrder = ByteOrder.LittleEndian)
         {
-            using (FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                return LoadN(stream, supportPaths, byteOrder);
-            }
+            using FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return LoadN(stream, supportPaths, byteOrder);
         }
 
         /// <summary>
@@ -110,19 +108,15 @@ namespace LordG.IO.Other
         /// </summary>
         public static void SaveN(string fileName, BymlFileData file)
         {
-            using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None))
-            {
-                SaveN(stream, file);
-            }
+            using FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None);
+            SaveN(stream, file);
         }
 
         public static byte[] SaveN(BymlFileData file)
         {
-            using (MemoryStream stream = new MemoryStream())
-            {
-                SaveN(stream, file);
-                return stream.ToArray();
-            }
+            using MemoryStream stream = new MemoryStream();
+            SaveN(stream, file);
+            return stream.ToArray();
         }
 
         /// <summary>
@@ -187,73 +181,71 @@ namespace LordG.IO.Other
         private dynamic Read(Stream stream)
         {
             // Open a reader on the given stream.
-            using (BinaryDataReader reader = new BinaryDataReader(stream, Encoding.UTF8, true))
+            using BinaryDataReader reader = new BinaryDataReader(stream, Encoding.UTF8, true);
+            reader.ByteOrder = _byteOrder;
+
+            // Load the header, specifying magic bytes ("BY"), version and main node offsets.
+            if (reader.ReadUInt16() != _magicBytes)
             {
+                _byteOrder = _byteOrder == ByteOrder.LittleEndian ? ByteOrder.BigEndian : ByteOrder.LittleEndian;
                 reader.ByteOrder = _byteOrder;
-
-                // Load the header, specifying magic bytes ("BY"), version and main node offsets.
-                if (reader.ReadUInt16() != _magicBytes)
-                {
-                    _byteOrder = _byteOrder == ByteOrder.LittleEndian ? ByteOrder.BigEndian : ByteOrder.LittleEndian;
-                    reader.ByteOrder = _byteOrder;
-                    reader.BaseStream.Position = 0;
-                    if (reader.ReadUInt16() != _magicBytes) throw new Exception("Header mismatch");
-                }
-                _version = reader.ReadUInt16();
-                uint nameArrayOffset = reader.ReadUInt32();
-                uint stringArrayOffset = reader.ReadUInt32();
-
-                using (reader.TemporarySeek())
-                {
-                    // Paths are supported if the third offset is a path array (or null) and the fourth a root.
-                    ByamlNodeType thirdNodeType = PeekNodeType(reader);
-                    reader.Seek(sizeof(uint));
-                    ByamlNodeType fourthNodeType = PeekNodeType(reader);
-
-                    _supportPaths = (thirdNodeType == ByamlNodeType.None || thirdNodeType == ByamlNodeType.PathArray)
-                         && (fourthNodeType == ByamlNodeType.Array || fourthNodeType == ByamlNodeType.Dictionary);
-
-                }
-
-
-                uint pathArrayOffset = 0;
-                if (_supportPaths)
-                {
-                    pathArrayOffset = reader.ReadUInt32();
-                }
-                uint rootNodeOffset = reader.ReadUInt32();
-
-                // Read the name array, holding strings referenced by index for the names of other nodes.
-                if (nameArrayOffset != 0)
-                {
-                    reader.Seek(nameArrayOffset, SeekOrigin.Begin);
-                    _nameArray = ReadNode(reader);
-                }
-
-                // Read the optional string array, holding strings referenced by index in string nodes.
-                if (stringArrayOffset != 0)
-                {
-                    reader.Seek(stringArrayOffset, SeekOrigin.Begin);
-                    _stringArray = ReadNode(reader);
-                }
-
-                // Read the optional path array, holding paths referenced by index in path nodes.
-                if (_supportPaths && pathArrayOffset != 0)
-                {
-                    // The third offset is the root node, so just read that and we're done.
-                    reader.Seek(pathArrayOffset, SeekOrigin.Begin);
-                    _pathArray = ReadNode(reader);
-                }
-
-                if (rootNodeOffset == 0) //empty byml
-                {
-                    return new List<dynamic>();
-                }
-
-                // Read the root node.
-                reader.Seek(rootNodeOffset, SeekOrigin.Begin);
-                return ReadNode(reader, 0);
+                reader.BaseStream.Position = 0;
+                if (reader.ReadUInt16() != _magicBytes) throw new Exception("Header mismatch");
             }
+            _version = reader.ReadUInt16();
+            uint nameArrayOffset = reader.ReadUInt32();
+            uint stringArrayOffset = reader.ReadUInt32();
+
+            using (reader.TemporarySeek())
+            {
+                // Paths are supported if the third offset is a path array (or null) and the fourth a root.
+                ByamlNodeType thirdNodeType = PeekNodeType(reader);
+                reader.Seek(sizeof(uint));
+                ByamlNodeType fourthNodeType = PeekNodeType(reader);
+
+                _supportPaths = (thirdNodeType == ByamlNodeType.None || thirdNodeType == ByamlNodeType.PathArray)
+                     && (fourthNodeType == ByamlNodeType.Array || fourthNodeType == ByamlNodeType.Dictionary);
+
+            }
+
+
+            uint pathArrayOffset = 0;
+            if (_supportPaths)
+            {
+                pathArrayOffset = reader.ReadUInt32();
+            }
+            uint rootNodeOffset = reader.ReadUInt32();
+
+            // Read the name array, holding strings referenced by index for the names of other nodes.
+            if (nameArrayOffset != 0)
+            {
+                reader.Seek(nameArrayOffset, SeekOrigin.Begin);
+                _nameArray = ReadNode(reader);
+            }
+
+            // Read the optional string array, holding strings referenced by index in string nodes.
+            if (stringArrayOffset != 0)
+            {
+                reader.Seek(stringArrayOffset, SeekOrigin.Begin);
+                _stringArray = ReadNode(reader);
+            }
+
+            // Read the optional path array, holding paths referenced by index in path nodes.
+            if (_supportPaths && pathArrayOffset != 0)
+            {
+                // The third offset is the root node, so just read that and we're done.
+                reader.Seek(pathArrayOffset, SeekOrigin.Begin);
+                _pathArray = ReadNode(reader);
+            }
+
+            if (rootNodeOffset == 0) //empty byml
+            {
+                return new List<dynamic>();
+            }
+
+            // Read the root node.
+            reader.Seek(rootNodeOffset, SeekOrigin.Begin);
+            return ReadNode(reader, 0);
         }
 
         private static ByamlNodeType PeekNodeType(BinaryDataReader reader)
@@ -504,45 +496,43 @@ namespace LordG.IO.Other
             _stringArray.Sort(StringComparer.Ordinal);
 
             // Open a writer on the given stream.
-            using (BinaryDataWriter writer = new BinaryDataWriter(stream, Encoding.UTF8, true))
+            using BinaryDataWriter writer = new BinaryDataWriter(stream, Encoding.UTF8, true);
+            writer.ByteOrder = _byteOrder;
+
+            // Write the header, specifying magic bytes, version and main node offsets.
+            writer.Write(_magicBytes);
+            writer.Write(_version);
+            Offset nameArrayOffset = writer.ReserveOffset();
+            Offset stringArrayOffset = writer.ReserveOffset();
+            Offset pathArrayOffset = _supportPaths ? writer.ReserveOffset() : null;
+            Offset rootOffset = writer.ReserveOffset();
+
+            // Write the main nodes.
+            WriteValueContents(writer, nameArrayOffset, ByamlNodeType.StringArray, _nameArray);
+            if (_stringArray.Count == 0)
             {
-                writer.ByteOrder = _byteOrder;
+                writer.Write(0);
+            }
+            else
+            {
+                WriteValueContents(writer, stringArrayOffset, ByamlNodeType.StringArray, _stringArray);
+            }
 
-                // Write the header, specifying magic bytes, version and main node offsets.
-                writer.Write(_magicBytes);
-                writer.Write(_version);
-                Offset nameArrayOffset = writer.ReserveOffset();
-                Offset stringArrayOffset = writer.ReserveOffset();
-                Offset pathArrayOffset = _supportPaths ? writer.ReserveOffset() : null;
-                Offset rootOffset = writer.ReserveOffset();
-
-                // Write the main nodes.
-                WriteValueContents(writer, nameArrayOffset, ByamlNodeType.StringArray, _nameArray);
-                if (_stringArray.Count == 0)
+            // Include a path array offset if requested.
+            if (_supportPaths)
+            {
+                if (_pathArray.Count == 0)
                 {
                     writer.Write(0);
                 }
                 else
                 {
-                    WriteValueContents(writer, stringArrayOffset, ByamlNodeType.StringArray, _stringArray);
+                    WriteValueContents(writer, pathArrayOffset, ByamlNodeType.PathArray, _pathArray);
                 }
-
-                // Include a path array offset if requested.
-                if (_supportPaths)
-                {
-                    if (_pathArray.Count == 0)
-                    {
-                        writer.Write(0);
-                    }
-                    else
-                    {
-                        WriteValueContents(writer, pathArrayOffset, ByamlNodeType.PathArray, _pathArray);
-                    }
-                }
-
-                // Write the root node.
-                WriteValueContents(writer, rootOffset, GetNodeType(root), root);
             }
+
+            // Write the root node.
+            WriteValueContents(writer, rootOffset, GetNodeType(root), root);
         }
 
         private void CollectNodeArrayContents(dynamic node, ref List<dynamic> alreadyCollected)

@@ -44,9 +44,14 @@ namespace LordG.IO
         /// <returns><typeparamref name="T"/> represented as a <see cref="byte"/>[].</returns>
         public static byte[] ToBytes<T>(this T any)
         {
-            byte[] output = new byte[Unsafe.SizeOf<T>()];
-            Unsafe.As<byte, T>(ref output[0]) = any;
-            return output;
+            Span<T> span = new T[] { any };
+            return ToBytes(span).ToArray();
+        }
+
+        public unsafe static Span<byte> ToBytes<T>(Span<T> span)
+        {
+            ref T ptr = ref MemoryMarshal.GetReference(span);
+            return new Span<byte>(Unsafe.AsPointer(ref ptr), span.Length * Unsafe.SizeOf<T>());
         }
 
         public static IntPtr AsPtr<T>(this T any)

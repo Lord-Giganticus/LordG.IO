@@ -60,11 +60,9 @@ namespace LordG.IO.Other
 
             YamlStream stream = new YamlStream(doc);
             var buffer = new StringBuilder();
-            using (var writer = new StringWriter(buffer))
-            {
-                stream.Save(writer, true);
-                return writer.ToString();
-            }
+            using var writer = new StringWriter(buffer);
+            stream.Save(writer, true);
+            return writer.ToString();
         }
 
         public static BymlFileData FromYaml(string text)
