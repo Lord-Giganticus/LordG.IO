@@ -183,6 +183,8 @@ namespace LordG.IO
             {
                 List<RARCDirectory> names = new List<RARCDirectory>();
                 RARCDirectory dir = Parent;
+                if (Parent.IsRoot)
+                    names.Add(dir);
                 while (dir.IsSubDir)
                 {
                     names.Add(dir);
