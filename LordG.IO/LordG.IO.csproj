@@ -9,7 +9,7 @@
     <Description>A Library for various formats from the Wii, Wii U, and Switch Era</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/Lord-Giganticus/LordG.IO</RepositoryUrl>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

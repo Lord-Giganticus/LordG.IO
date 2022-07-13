@@ -3,14 +3,19 @@ using System.Text;
 using System;
 using Syroot.BinaryData;
 using System.IO;
+using System.Linq;
 
 namespace LordG.IO
 {
     public class RARC
     {
-        public RARCDirectory[] Directories;
+        protected RARCDirectory[] Directories;
 
-        public List<RARCFile> Files = new List<RARCFile>();
+        public RARCDirectory[] Dirs => Directories.Where(x => !x.IsSubDir).ToArray();
+
+        public RARCHeader Header;
+
+        public RARCDataHeader DataHeader;
 
         public ByteOrder Endian { get; protected set; }
 
@@ -85,7 +90,11 @@ namespace LordG.IO
             public ushort Hash;
             public ushort NodeCount;
             public uint FirstNodeOffset;
+            public bool IsSubDir = false;
+            public bool IsRoot => ParentDir is null;
             public List<RARCFile> Nodes = new List<RARCFile>();
+            public List<RARCDirectory> SubDirs = new List<RARCDirectory>();
+            public RARCDirectory ParentDir = null;
 
             public RARCDirectory(RARC parent, ref EndianReader reader)
             {
@@ -95,6 +104,28 @@ namespace LordG.IO
                 Hash = reader.ReadNumeric<ushort>();
                 NodeCount = reader.ReadNumeric<ushort>();
                 FirstNodeOffset = reader.ReadNumeric<uint>();
+            }
+
+            public override string ToString()
+            {
+                if (IsSubDir)
+                {
+                    List<RARCDirectory> names = new List<RARCDirectory>();
+                    RARCDirectory dir = ParentDir;
+                    while (dir.IsSubDir)
+                    {
+                        names.Add(dir);
+                        dir = dir.ParentDir;
+                        if (!dir.IsSubDir)
+                            names.Add(dir);
+                    }
+                    names.Reverse();
+                    StringBuilder builder = new StringBuilder();
+                    names.ForEach(x => { builder.Append(x.Name); builder.Append("->"); });
+                    builder.Append(Name);
+                    return builder.ToString();
+                }
+                else return Name;
             }
         }
 
@@ -139,23 +170,44 @@ namespace LordG.IO
                 Offset = reader.ReadNumeric<uint>();
                 Size = reader.ReadNumeric<uint>();
             }
+
+            public void ReplaceData(byte[] buf)
+            {
+                if (Flags.HasFlag(FileAttribute.DIRECTORY))
+                    throw new Exception("FileNode is NOT a actual file.");
+                Data = buf;
+                Size = (uint)buf.Length;
+            }
+
+            public override string ToString()
+            {
+                List<RARCDirectory> names = new List<RARCDirectory>();
+                RARCDirectory dir = Parent;
+                while (dir.IsSubDir)
+                {
+                    names.Add(dir);
+                    dir = dir.ParentDir;
+                    if (!dir.IsSubDir)
+                        names.Add(dir);
+                }
+                names.Reverse();
+                StringBuilder builder = new StringBuilder();
+                names.ForEach(x => {builder.Append(x.Name); builder.Append("->");});
+                builder.Append(Name);
+                return builder.ToString();
+            }
         }
 
         public RARC(EndianReader reader)
         {
             reader.Order = EndianStream.CurrentEndian;
-            var magic = reader.ReadNumeric<uint>(); 
-            switch (magic)
+            var magic = reader.ReadNumeric<uint>();
+            reader.Order = magic switch
             {
-                case 1129464146:
-                    reader.Order = ByteOrder.BigEndian;
-                    break;
-                case 1380012611:
-                    reader.Order = ByteOrder.LittleEndian;
-                    break;
-                default:
-                    throw new Exception("File does not contain RARC/CRAR magic.");
-            }
+                1129464146 => ByteOrder.BigEndian,
+                1380012611 => ByteOrder.LittleEndian,
+                _ => throw new Exception("File does not contain RARC/CRAR magic."),
+            };
             Endian = reader.Order;
             var header = new RARCHeader(ref reader);
             long pos = reader.Position;
@@ -171,6 +223,9 @@ namespace LordG.IO
                 {
                     Directories[i].Name = reader.ReadZeroTerminatedString(Encoding.ASCII);
                 }
+            }
+            for (int i = 0; i < Directories.Length; i++)
+            {
                 for (int n = 0; n < Directories[i].NodeCount; n++)
                 {
                     reader.SeekBegin(data.NodeOffset + (n + Directories[i].FirstNodeOffset) * 0x14);
@@ -180,18 +235,109 @@ namespace LordG.IO
                     {
                         entry.Name = reader.ReadZeroTerminatedString(Encoding.ASCII);
                     }
-                    if (entry.Name is "." || entry.Name is "..")
-                        continue;
                     entry.Parent = Directories[i];
-                    using (reader.TempSeek(pos + header.DataOffset + entry.Offset, 0))
-                    {
-                        entry.Data = reader.ReadBytes((int)entry.Size);
-                    }
-                    Files.Add(entry);
+                    if (entry.Flags.HasFlag(FileAttribute.FILE))
+                        using (reader.TempSeek(pos + header.DataOffset + entry.Offset, 0))
+                            entry.Data = reader.ReadBytes((int)entry.Size);
+                    else if (entry.Flags.HasFlag(FileAttribute.DIRECTORY))
+                        if (!(entry.Name is ".." || entry.Name is "."))
+                        {
+                            RARCDirectory dir = Directories[entry.Offset];
+                            dir.IsSubDir = true;
+                            dir.ParentDir = entry.Parent;
+                            entry.Parent.SubDirs.Add(dir);
+                        }
                     Directories[i].Nodes.Add(entry);
                 }
             }
             Name = Directories[0].Name;
+        }
+
+        public byte[] Save()
+        {
+            using EndianStream ms = new EndianStream();
+            using EndianWriter writer = new EndianWriter(ms, false);
+            writer.Order = Endian;
+            Encoding enc = Encoding.ASCII;
+            switch (Endian)
+            {
+                case ByteOrder.BigEndian:
+                    writer.Write(enc.GetBytes("RARC"));
+                    break;
+                case ByteOrder.LittleEndian:
+                    writer.Write(enc.GetBytes("CRAR"));
+                    break;
+            }
+            #region Header
+            writer.Write(Header.Size);
+            writer.Write(Header.HeaderSize);
+            writer.Write(Header.DataOffset);
+            writer.Write(Header.FileDataSize);
+            writer.Write(Header.MRAMSize);
+            writer.Write(Header.ARAMSize);
+            writer.Write(Header.DVDSize);
+            #endregion
+            #region DataHeader
+            writer.Write(DataHeader.DirCount);
+            writer.Write(DataHeader.DirOffset - 32);
+            writer.Write(DataHeader.TotalNodeCount);
+            writer.Write(DataHeader.NodeOffset - 32);
+            writer.Write(DataHeader.StringTableSize);
+            writer.Write(DataHeader.StringTableOffset - 32);
+            writer.Write(DataHeader.NodeCount);
+            writer.Write(DataHeader.Sync);
+            writer.Write(DataHeader.Padding);
+            #endregion
+            writer.Seek((int)DataHeader.DirOffset, 0);
+            #region DirNode Writing
+            for (int i = 0; i < DataHeader.DirCount; i++)
+            {
+                RARCDirectory dir = Directories[i];
+                writer.Write(dir.ID);
+                writer.Write(dir.NameOffset);
+                writer.Write(dir.Hash);
+                writer.Write(dir.NodeCount);
+                writer.Write(dir.FirstNodeOffset);
+            }
+            #endregion
+            #region String and FileNode Writing
+            for (int i = 0; i < Directories.Length; i++)
+            {
+                var offset = DataHeader.StringTableOffset + Directories[i].NameOffset;
+                using (writer.TempSeek(offset, 0))
+                    writer.WriteZeroTerminatedString(Directories[i].Name, Encoding.ASCII);
+                for (int n = 0; n < Directories[i].NodeCount; n++)
+                {
+                    writer.Seek((int)(DataHeader.NodeOffset + (n + Directories[i].FirstNodeOffset) * 0x14), 0);
+                    RARCFile file = Directories[i].Nodes[n];
+                    writer.Write(file.ID);
+                    writer.Write(file.Hash);
+                    if (!writer.Reverse)
+                    {
+                        writer.Write(file.NameOffset);
+                        writer.Seek(1, SeekOrigin.Current);
+                        writer.Write((byte)file.Flags);
+                    }
+                    else
+                    {
+                        writer.Write((byte)file.Flags);
+                        writer.Seek(1, SeekOrigin.Current);
+                        writer.Write(file.NameOffset);
+                    }
+                    writer.Write(file.Offset);
+                    writer.Write(file.Size);
+                    var nameoff = DataHeader.StringTableOffset + file.NameOffset;
+                    using (writer.TempSeek(nameoff, 0))
+                    {
+                        writer.WriteZeroTerminatedString(file.Name, Encoding.ASCII);
+                    }
+                    if (file.Flags.HasFlag(FileAttribute.FILE))
+                        using (writer.TempSeek(32 + Header.DataOffset + file.Offset, 0))
+                            writer.Write(file.Data);
+                }
+            }
+            #endregion
+            return ms.ToArray();
         }
     }
 }

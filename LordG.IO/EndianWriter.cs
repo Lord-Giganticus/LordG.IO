@@ -74,6 +74,13 @@ namespace LordG.IO
             return new SeekTask(BaseStream, pos, origin);
         }
 
+        public void WriteZeroTerminatedString(string str, Encoding enc)
+        {
+            StringBuilder builder = new StringBuilder(str);
+            builder.Append('\0');
+            Write(enc.GetBytes(builder.ToString()));
+        }
+
         public static explicit operator EndianWriter(Stream stream) =>
             new EndianWriter(stream, false);
 

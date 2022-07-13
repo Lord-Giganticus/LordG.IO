@@ -96,37 +96,22 @@ namespace LordG.IO.Other
 		/// <returns>The <see cref="Type"/> to instantiate for the node.</returns>
 		internal static Type GetInstanceType(this ByamlNodeType nodeType)
 		{
-			switch (nodeType)
-			{
-				case ByamlNodeType.StringIndex:
-					return typeof(string);
-				case ByamlNodeType.PathIndex:
-					return typeof(List<ByamlPathPoint>);
-				case ByamlNodeType.Array:
-					// TODO: Check if this could be loaded as an object array.
-					throw new ByamlException("Cannot instantiate an array of unknown element type.");
-				case ByamlNodeType.Dictionary:
-					// TODO: Check if this could be loaded as a string-object dictionary.
-					throw new ByamlException("Cannot instantiate an object of unknown type.");
-				case ByamlNodeType.Boolean:
-					return typeof(bool);
-				case ByamlNodeType.Integer:
-					return typeof(int);
-				case ByamlNodeType.Float:
-					return typeof(float);
-				case ByamlNodeType.Uinteger:
-					return typeof(UInt32);
-				case ByamlNodeType.Long:
-					return typeof(Int64);
-				case ByamlNodeType.ULong:
-					return typeof(UInt64);
-				case ByamlNodeType.Double:
-					return typeof(double);
-				case ByamlNodeType.Null:
-					return typeof(object);
-				default:
-					throw new ByamlException($"Unknown node type {nodeType}.");
-			}
-		}
+            return nodeType switch
+            {
+                ByamlNodeType.StringIndex => typeof(string),
+                ByamlNodeType.PathIndex => typeof(List<ByamlPathPoint>),
+                ByamlNodeType.Array => throw new ByamlException("Cannot instantiate an array of unknown element type."),// TODO: Check if this could be loaded as an object array.
+                ByamlNodeType.Dictionary => throw new ByamlException("Cannot instantiate an object of unknown type."),// TODO: Check if this could be loaded as a string-object dictionary.
+                ByamlNodeType.Boolean => typeof(bool),
+                ByamlNodeType.Integer => typeof(int),
+                ByamlNodeType.Float => typeof(float),
+                ByamlNodeType.Uinteger => typeof(UInt32),
+                ByamlNodeType.Long => typeof(Int64),
+                ByamlNodeType.ULong => typeof(UInt64),
+                ByamlNodeType.Double => typeof(double),
+                ByamlNodeType.Null => typeof(object),
+                _ => throw new ByamlException($"Unknown node type {nodeType}."),
+            };
+        }
 	}	
 }

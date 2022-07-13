@@ -302,23 +302,14 @@ namespace LordG.IO.Other
                 }
                 dynamic value = null;
                 int length = (int)Get3LsbBytes(reader.ReadUInt32());
-                switch (nodeType)
+                value = nodeType switch
                 {
-                    case ByamlNodeType.Array:
-                        value = ReadArrayNode(reader, length, offset);
-                        break;
-                    case ByamlNodeType.Dictionary:
-                        value = ReadDictionaryNode(reader, length, offset);
-                        break;
-                    case ByamlNodeType.StringArray:
-                        value = ReadStringArrayNode(reader, length);
-                        break;
-                    case ByamlNodeType.PathArray:
-                        value = ReadPathArrayNode(reader, length);
-                        break;
-                    default:
-                        throw new ByamlException($"Unknown node type '{nodeType}'.");
-                }
+                    ByamlNodeType.Array => ReadArrayNode(reader, length, offset),
+                    ByamlNodeType.Dictionary => ReadDictionaryNode(reader, length, offset),
+                    ByamlNodeType.StringArray => ReadStringArrayNode(reader, length),
+                    ByamlNodeType.PathArray => ReadPathArrayNode(reader, length),
+                    _ => throw new ByamlException($"Unknown node type '{nodeType}'."),
+                };
                 // Seek back to the previous position if this was a value positioned at an offset.
                 if (oldPos.HasValue)
                 {
@@ -361,16 +352,13 @@ namespace LordG.IO.Other
 
             dynamic readLongValFromOffset(ByamlNodeType type)
             {
-                switch (type)
+                return type switch
                 {
-                    case ByamlNodeType.Long:
-                        return reader.ReadInt64();
-                    case ByamlNodeType.ULong:
-                        return reader.ReadUInt64();
-                    case ByamlNodeType.Double:
-                        return reader.ReadDouble();
-                }
-                throw new ByamlException($"Unknown node type '{nodeType}'.");
+                    ByamlNodeType.Long => reader.ReadInt64(),
+                    ByamlNodeType.ULong => reader.ReadUInt64(),
+                    ByamlNodeType.Double => (dynamic)reader.ReadDouble(),
+                    _ => throw new ByamlException($"Unknown node type '{nodeType}'."),
+                };
             }
         }
 
