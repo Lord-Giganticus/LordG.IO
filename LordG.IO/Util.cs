@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace LordG.IO
 {
@@ -58,6 +59,15 @@ namespace LordG.IO
         {
             byte[] buf = any.ToBytes();
             return Marshal.UnsafeAddrOfPinnedArrayElement(buf, 0);
+        }
+
+        public static int IndexOf<T>(this IEnumerable<T> ienum, Func<T, bool> func)
+        {
+            T[] arr = ienum.ToArray();
+            for (int i = 0; i < arr.Length; i++)
+                if (func(arr[i]))
+                    return i;
+            return -1;
         }
     }
 }

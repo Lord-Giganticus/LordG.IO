@@ -106,12 +106,25 @@ namespace LordG.IO
                 FirstNodeOffset = reader.ReadNumeric<uint>();
             }
 
+            public void AddFile(FileInfo file)
+            {
+                // DO NOT ADD FILES TO DIRS WITH SUBDIRS.
+                if (SubDirs.Count > 0)
+                    return;
+                ushort idx = (ushort)(Nodes.IndexOf(x => x.Name is "..") - 1);
+                Nodes.Insert(idx, new RARCFile(file, this, idx));
+                RARCFile f = Nodes[idx - 1];
+                Nodes[idx].Offset = f.CalcNextOffset();
+            }
+
             public override string ToString()
             {
                 if (IsSubDir)
                 {
                     List<RARCDirectory> names = new List<RARCDirectory>();
                     RARCDirectory dir = ParentDir;
+                    if (dir.IsRoot)
+                        names.Add(dir);
                     while (dir.IsSubDir)
                     {
                         names.Add(dir);
@@ -198,6 +211,32 @@ namespace LordG.IO
                 builder.Append(Name);
                 return builder.ToString();
             }
+
+            public uint CalcNextOffset()
+            {
+                if (ID == ushort.MaxValue)
+                    return Offset + 1;
+                else
+                {
+                    uint off = 0;
+                    for (int i = 0; !(i > ID); i++)
+                    {
+                        var node = Parent.Nodes[i];
+                        off += node.Size;
+                    }
+                    return off;
+                }
+            }
+
+            internal RARCFile(FileInfo file, RARCDirectory dir, ushort idx)
+            {
+                Name = file.Name;
+                Hash = Calc_Hash(Name);
+                Size = (uint)file.Length;
+                Data = File.ReadAllBytes(file.FullName);
+                Parent = dir;
+                ID = idx;
+            }
         }
 
         public RARC(EndianReader reader)
@@ -211,16 +250,16 @@ namespace LordG.IO
                 _ => throw new Exception("File does not contain RARC/CRAR magic."),
             };
             Endian = reader.Order;
-            var header = new RARCHeader(ref reader);
+            Header = new RARCHeader(ref reader);
             long pos = reader.Position;
-            var data = new RARCDataHeader(ref reader, (uint)pos);
-            Directories = new RARCDirectory[data.DirCount];
-            reader.SeekBegin(data.DirOffset);
-            for (int i = 0; i < data.DirCount; i++)
+            DataHeader = new RARCDataHeader(ref reader, (uint)pos);
+            Directories = new RARCDirectory[DataHeader.DirCount];
+            reader.SeekBegin(DataHeader.DirOffset);
+            for (int i = 0; i < DataHeader.DirCount; i++)
                 Directories[i] = new RARCDirectory(this, ref reader);
             for (int i = 0; i < Directories.Length; i++)
             {
-                var offset = data.StringTableOffset + Directories[i].NameOffset;
+                var offset = DataHeader.StringTableOffset + Directories[i].NameOffset;
                 using (reader.TempSeek(offset, SeekOrigin.Begin))
                 {
                     Directories[i].Name = reader.ReadZeroTerminatedString(Encoding.ASCII);
@@ -230,16 +269,16 @@ namespace LordG.IO
             {
                 for (int n = 0; n < Directories[i].NodeCount; n++)
                 {
-                    reader.SeekBegin(data.NodeOffset + (n + Directories[i].FirstNodeOffset) * 0x14);
+                    reader.SeekBegin(DataHeader.NodeOffset + (n + Directories[i].FirstNodeOffset) * 0x14);
                     var entry = new RARCFile(ref reader);
-                    var nameoff = data.StringTableOffset + entry.NameOffset;
+                    var nameoff = DataHeader.StringTableOffset + entry.NameOffset;
                     using (reader.TempSeek(nameoff, SeekOrigin.Begin))
                     {
                         entry.Name = reader.ReadZeroTerminatedString(Encoding.ASCII);
                     }
                     entry.Parent = Directories[i];
                     if (entry.Flags.HasFlag(FileAttribute.FILE))
-                        using (reader.TempSeek(pos + header.DataOffset + entry.Offset, 0))
+                        using (reader.TempSeek(pos + Header.DataOffset + entry.Offset, 0))
                             entry.Data = reader.ReadBytes((int)entry.Size);
                     else if (entry.Flags.HasFlag(FileAttribute.DIRECTORY))
                         if (!(entry.Name is ".." || entry.Name is "."))
@@ -340,6 +379,19 @@ namespace LordG.IO
             }
             #endregion
             return ms.ToArray();
+        }
+
+        public static ushort Calc_Hash(string str)
+        {
+            int hash = 0;
+            for (int i = 0; i < str.Length; i++)
+            {
+                hash *= 3;
+                hash += str[i];
+                hash = ushort.MaxValue & hash;
+            }
+
+            return (ushort)hash;
         }
     }
 }
