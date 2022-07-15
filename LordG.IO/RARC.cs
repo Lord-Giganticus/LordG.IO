@@ -5,6 +5,7 @@ using Syroot.BinaryData;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace LordG.IO
 {
@@ -108,43 +109,6 @@ namespace LordG.IO
             }
 
             internal RARCDirectory() { }
-
-            public RARCFile AddFile(FileInfo file)
-            {
-                if (!file.Exists) throw new FileNotFoundException("File isn't exist!");
-                // DO NOT ADD FILES TO DIRS WITH SUBDIRS.
-                if (SubDirs.Count > 0)
-                    return null;
-                ushort idx = (ushort)(Nodes.IndexOf(x => x.Name is "..") - 1);
-                Nodes.Insert(idx, new RARCFile(file, this, idx));
-                if (idx - 1 > 0)
-                {
-                    RARCFile f = Nodes[idx - 1];
-                    Nodes[idx].Offset = f.CalcNextOffset();
-                }
-                else Nodes[idx].Offset = 0;
-                NodeCount++;
-                Parent.DataHeader.TotalNodeCount++;
-                return Nodes[idx];
-            }
-
-            public void RemoveFile(RARCFile file)
-            {
-                if (file.Name is ".." || file.Name is ".")
-                    return;
-                int idx = Nodes.IndexOf(x => x.Name is ".") - 1;
-                int fidx = Nodes.IndexOf(file);
-                if (fidx == idx)
-                    Nodes.RemoveAt(idx); 
-                else if (idx > fidx)
-                {
-                    int size = file.Name.Length + 1;
-                    for (int i = idx + 1; i < fidx; i++)
-                        Nodes[i].NameOffset -= (ushort)size;
-                }
-                NodeCount--;
-                Parent.DataHeader.TotalNodeCount--;
-            }
 
             public override string ToString()
             {
@@ -367,7 +331,9 @@ namespace LordG.IO
             writer.Write(DataHeader.TotalNodeCount);
             writer.Write(DataHeader.NodeOffset - 32);
             writer.Write(DataHeader.StringTableSize);
-            writer.Write(DataHeader.StringTableOffset - 32);
+            var pos = writer.BaseStream.Position;
+            // SKIP StringTable's offset, WILL COME BACK.
+            writer.Seek(4, SeekOrigin.Current);
             writer.Write(DataHeader.NodeCount);
             writer.Write(DataHeader.Sync);
             writer.Write(DataHeader.Padding);
@@ -384,12 +350,9 @@ namespace LordG.IO
                 writer.Write(dir.FirstNodeOffset);
             }
             #endregion
-            #region String and FileNode Writing
+            #region FileNode Writing
             for (int i = 0; i < Directories.Count; i++)
             {
-                var offset = DataHeader.StringTableOffset + Directories[i].NameOffset;
-                using (writer.TempSeek(offset, 0))
-                    writer.WriteZeroTerminatedString(Directories[i].Name, Encoding.ASCII);
                 for (int n = 0; n < Directories[i].NodeCount; n++)
                 {
                     writer.Seek((int)(DataHeader.NodeOffset + (n + Directories[i].FirstNodeOffset) * 0x14), 0);
@@ -410,17 +373,30 @@ namespace LordG.IO
                     }
                     writer.Write(file.Offset);
                     writer.Write(file.Size);
-                    var nameoff = DataHeader.StringTableOffset + file.NameOffset;
-                    using (writer.TempSeek(nameoff, 0))
-                    {
-                        writer.WriteZeroTerminatedString(file.Name, Encoding.ASCII);
-                    }
                     if (file.Flags.HasFlag(FileAttribute.FILE))
                         using (writer.TempSeek(32 + Header.DataOffset + file.Offset, 0))
                             writer.Write(file.Data);
                 }
             }
             #endregion
+            var strpos = writer.BaseStream.Position;
+            // Safety Check.
+            strpos = strpos > DataHeader.StringTableOffset ? strpos : DataHeader.StringTableOffset;
+            for (int i = 0; i < Directories.Count; i++)
+            {
+                var off = strpos + Directories[i].NameOffset;
+                using (writer.TempSeek(off, 0))
+                    writer.WriteZeroTerminatedString(Directories[i].Name, Encoding.ASCII);
+                for (int n = 0; n < Directories[i].NodeCount; n++)
+                {
+                    off = strpos + Directories[i].Nodes[n].NameOffset;
+                    using (writer.TempSeek(off, 0))
+                        writer.WriteZeroTerminatedString(Directories[i].Nodes[n].Name, Encoding.ASCII);
+                }
+            }
+            writer.Seek((int)pos, SeekOrigin.Begin);
+            // DataHeader.StringTableOffset
+            writer.Write((uint)(strpos - 0x20));
             return ms.ToArray();
         }
 
