@@ -4,14 +4,15 @@ using System;
 using Syroot.BinaryData;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace LordG.IO
 {
     public class RARC
     {
-        protected RARCDirectory[] Directories;
+        internal List<RARCDirectory> Directories;
 
-        public RARCDirectory[] Dirs => Directories.Where(x => !x.IsSubDir).ToArray();
+        public RARCDirectory Root => Directories.Where(x => !x.IsSubDir).First();
 
         public RARCHeader Header;
 
@@ -81,9 +82,9 @@ namespace LordG.IO
             YAZ0_COMPRESSED = 0x80
         }
 
-        public class RARCDirectory
+        public class RARCDirectory : IStringPoolWritable
         {
-            public string Name;
+            public string Name { get; set; }
             public RARC Parent;
             public uint ID;
             public uint NameOffset;
@@ -106,15 +107,43 @@ namespace LordG.IO
                 FirstNodeOffset = reader.ReadNumeric<uint>();
             }
 
-            public void AddFile(FileInfo file)
+            internal RARCDirectory() { }
+
+            public RARCFile AddFile(FileInfo file)
             {
+                if (!file.Exists) throw new FileNotFoundException("File isn't exist!");
                 // DO NOT ADD FILES TO DIRS WITH SUBDIRS.
                 if (SubDirs.Count > 0)
-                    return;
+                    return null;
                 ushort idx = (ushort)(Nodes.IndexOf(x => x.Name is "..") - 1);
                 Nodes.Insert(idx, new RARCFile(file, this, idx));
-                RARCFile f = Nodes[idx - 1];
-                Nodes[idx].Offset = f.CalcNextOffset();
+                if (idx - 1 > 0)
+                {
+                    RARCFile f = Nodes[idx - 1];
+                    Nodes[idx].Offset = f.CalcNextOffset();
+                }
+                else Nodes[idx].Offset = 0;
+                NodeCount++;
+                Parent.DataHeader.TotalNodeCount++;
+                return Nodes[idx];
+            }
+
+            public void RemoveFile(RARCFile file)
+            {
+                if (file.Name is ".." || file.Name is ".")
+                    return;
+                int idx = Nodes.IndexOf(x => x.Name is ".") - 1;
+                int fidx = Nodes.IndexOf(file);
+                if (fidx == idx)
+                    Nodes.RemoveAt(idx); 
+                else if (idx > fidx)
+                {
+                    int size = file.Name.Length + 1;
+                    for (int i = idx + 1; i < fidx; i++)
+                        Nodes[i].NameOffset -= (ushort)size;
+                }
+                NodeCount--;
+                Parent.DataHeader.TotalNodeCount--;
             }
 
             public override string ToString()
@@ -140,11 +169,13 @@ namespace LordG.IO
                 }
                 else return Name;
             }
+
+            public void WriteToPool(StringPool pool) => pool.Write(this);
         }
 
-        public class RARCFile
+        public class RARCFile : IStringPoolWritable
         {
-            public string Name;
+            public string Name { get; set; }
 
             public RARCDirectory Parent;
 
@@ -163,6 +194,8 @@ namespace LordG.IO
             public ushort NameOffset;
 
             public byte[] Data;
+
+            public const byte SizeOf = 16;
 
             public RARCFile(ref EndianReader reader)
             {
@@ -237,6 +270,13 @@ namespace LordG.IO
                 Parent = dir;
                 ID = idx;
             }
+
+            internal RARCFile(RARCDirectory dir)
+            {
+                Parent = dir;
+            }
+
+            public void WriteToPool(StringPool pool) => pool.Write(this);
         }
 
         public RARC(EndianReader reader)
@@ -253,11 +293,11 @@ namespace LordG.IO
             Header = new RARCHeader(ref reader);
             long pos = reader.Position;
             DataHeader = new RARCDataHeader(ref reader, (uint)pos);
-            Directories = new RARCDirectory[DataHeader.DirCount];
+            Directories = new List<RARCDirectory>((int)DataHeader.DirCount);
             reader.SeekBegin(DataHeader.DirOffset);
             for (int i = 0; i < DataHeader.DirCount; i++)
-                Directories[i] = new RARCDirectory(this, ref reader);
-            for (int i = 0; i < Directories.Length; i++)
+                Directories.Add(new RARCDirectory(this, ref reader));
+            for (int i = 0; i < Directories.Count; i++)
             {
                 var offset = DataHeader.StringTableOffset + Directories[i].NameOffset;
                 using (reader.TempSeek(offset, SeekOrigin.Begin))
@@ -265,7 +305,7 @@ namespace LordG.IO
                     Directories[i].Name = reader.ReadZeroTerminatedString(Encoding.ASCII);
                 }
             }
-            for (int i = 0; i < Directories.Length; i++)
+            for (int i = 0; i < Directories.Count; i++)
             {
                 for (int n = 0; n < Directories[i].NodeCount; n++)
                 {
@@ -283,7 +323,7 @@ namespace LordG.IO
                     else if (entry.Flags.HasFlag(FileAttribute.DIRECTORY))
                         if (!(entry.Name is ".." || entry.Name is "."))
                         {
-                            RARCDirectory dir = Directories[entry.Offset];
+                            RARCDirectory dir = Directories[(int)entry.Offset];
                             dir.IsSubDir = true;
                             dir.ParentDir = entry.Parent;
                             entry.Parent.SubDirs.Add(dir);
@@ -309,6 +349,9 @@ namespace LordG.IO
                     writer.Write(enc.GetBytes("CRAR"));
                     break;
             }
+            var pool = StringPool.GetAllOffsets(this);
+            DataHeader.StringTableSize = (uint)pool.buffer.Count;
+            DataHeader.DirCount = (uint)Directories.Count;
             #region Header
             writer.Write(Header.Size);
             writer.Write(Header.HeaderSize);
@@ -342,7 +385,7 @@ namespace LordG.IO
             }
             #endregion
             #region String and FileNode Writing
-            for (int i = 0; i < Directories.Length; i++)
+            for (int i = 0; i < Directories.Count; i++)
             {
                 var offset = DataHeader.StringTableOffset + Directories[i].NameOffset;
                 using (writer.TempSeek(offset, 0))

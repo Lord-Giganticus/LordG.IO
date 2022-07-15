@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Linq;
+using System.IO;
 
 namespace LordG.IO
 {
@@ -68,6 +69,15 @@ namespace LordG.IO
                 if (func(arr[i]))
                     return i;
             return -1;
+        }
+
+        public static bool HasFiles(this DirectoryInfo info, List<bool> prev = null)
+        {
+            List<bool> bools = prev ?? new List<bool>();
+            bools.Add(info.GetFiles().Length > 0);
+            foreach (var sub in info.GetDirectories())
+                HasFiles(sub, bools);
+            return bools.Any(x => x is true);
         }
     }
 }
