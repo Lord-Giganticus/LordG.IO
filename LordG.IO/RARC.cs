@@ -3,414 +3,249 @@ using System.Text;
 using System;
 using Syroot.BinaryData;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.Linq;
 
 namespace LordG.IO
 {
-    public class RARC
+    [Flags]
+    public enum JKRFileAttr
     {
-        internal List<RARCDirectory> Directories;
-
-        public RARCDirectory Root => Directories.Where(x => !x.IsSubDir).First();
-
-        public RARCHeader Header;
-
-        public RARCDataHeader DataHeader;
-
-        public ByteOrder Endian { get; protected set; }
-
-        public string Name;
-
-        public struct RARCHeader
+        File = 0x01,
+        Directory = 0x02,
+        Compressed = 0x04,
+        CompressionType = 0x80,
+        LOAD_TO_MRAM = 0x10,
+        LOAD_TO_ARAM = 0x20,
+        LOAD_FROM_DVD = 0x40
+    }
+    [Flags]
+    public enum JKRCompressionType
+    {
+        None = 0x00,
+        Yay0 = 0x01, // SZP
+        Yaz0 = 0x02, // SZS
+        ASR = 0x03, // ASR (Seen only in the Wii Home menu)
+    }
+    public struct JKRArchiveHeader
+    {
+        public uint mDVDFileSize;
+        public uint mARAMSize;
+        public uint mMRAMSize;
+        public uint mFileDataSize;
+        public uint mFileDataOffset;
+        public uint mHeaderSize;
+        public uint mFileSize;
+        // For some reason Someone's code read BE data BACKWARDS, making the stuct members from last to first.
+        public JKRArchiveHeader(EndianReader reader)
         {
-            public uint Size;
-            public uint HeaderSize;
-            public uint DataOffset;
-            public uint FileDataSize;
-            public uint MRAMSize;
-            public uint ARAMSize;
-            public uint DVDSize;
+            mFileSize = reader.ReadUInt32();
+            mHeaderSize = reader.ReadUInt32();
+            mFileDataOffset = reader.ReadUInt32();
+            mFileDataSize = reader.ReadUInt32();
+            mMRAMSize = reader.ReadUInt32();
+            mARAMSize = reader.ReadUInt32();
+            mDVDFileSize = reader.ReadUInt32();
+        }
+    }
 
-            public RARCHeader(ref EndianReader reader)
+    public struct JKRArchiveDataHeader
+    {
+        public uint mStringTableOffset;
+        public uint mStringTableSize;
+        public uint mFileNodeOffset;
+        public uint mFileNodeCount;
+        public uint mDirNodeOffset;
+        public uint mDirNodeCount;
+        public JKRArchiveDataHeader(EndianReader reader)
+        {
+            mDirNodeCount = reader.ReadUInt32();
+            mDirNodeOffset = reader.ReadUInt32();
+            mFileNodeCount = reader.ReadUInt32();
+            mFileNodeOffset = reader.ReadUInt32();
+            mStringTableSize = reader.ReadUInt32();
+            mStringTableOffset = reader.ReadUInt32(); 
+        }
+    }
+
+    public class JKRFolderNode
+    {
+        public struct Node
+        {
+            public uint mFirstFileOffs;
+            public ushort mFileCount;
+            public ushort mHash;
+            public uint mNameOffs;
+            public string mShortName;
+            public Node(EndianReader reader)
             {
-                Size = reader.ReadNumeric<uint>();
-                HeaderSize = reader.ReadNumeric<uint>();
-                DataOffset = reader.ReadNumeric<uint>();
-                FileDataSize = reader.ReadNumeric<uint>();
-                MRAMSize = reader.ReadNumeric<uint>();
-                ARAMSize = reader.ReadNumeric<uint>();
-                DVDSize = reader.ReadNumeric<uint>();
+                mShortName = reader.ReadSizedString(0x4, Encoding.ASCII);
+                mNameOffs = reader.ReadUInt32();
+                mHash = reader.ReadUInt16();
+                mFileCount = reader.ReadUInt16();
+                mFirstFileOffs = reader.ReadUInt32();
             }
         }
-
-        public struct RARCDataHeader
+        public Node mNode;
+        public bool mIsRoot = false;
+        public string mName;
+        public JKRDirectory mDirectory;
+        public List<JKRDirectory> mChildDirectories = new List<JKRDirectory>();
+        /// <summary>
+        /// Is this is true, then this FolderNode does NOT have files
+        /// </summary>
+        public bool HasSubDirs => mChildDirectories.Count > 0;
+        public override string ToString()
         {
-            public uint DirCount;
-            public uint DirOffset;
-            public uint TotalNodeCount;
-            public uint NodeOffset;
-            public uint StringTableSize;
-            public uint StringTableOffset;
-            public ushort NodeCount;
-            public bool Sync;
-            public byte[] Padding;
-
-            public RARCDataHeader(ref EndianReader reader, uint pos)
+            var msg = mDirectory.ToString();
+            if (string.IsNullOrEmpty(msg))
+                return mName;
+            else if (!string.IsNullOrEmpty(msg) && !msg.EndsWith(mName))
+                msg += $"\\{mName}";
+            return msg;
+        }
+    }
+    [DebuggerDisplay("{ToString(),raw}")]
+    public struct JKRDirectory
+    {
+        public struct Node
+        {
+            public uint mDataSize;
+            public uint mData;
+            public uint mAttrAndNameOffs;
+            public ushort mHash;
+            public ushort mNodeIdx;
+            public Node(EndianReader reader)
             {
-                DirCount = reader.ReadNumeric<uint>();
-                DirOffset = reader.ReadNumeric<uint>() + pos;
-                TotalNodeCount = reader.ReadNumeric<uint>();
-                NodeOffset = reader.ReadNumeric<uint>() + pos;
-                StringTableSize = reader.ReadNumeric<uint>();
-                StringTableOffset = reader.ReadNumeric<uint>() + pos;
-                NodeCount = reader.ReadNumeric<ushort>();
-                Sync = reader.ReadByte() is 0x01;
-                Padding = reader.ReadBytes(5);
+                mNodeIdx = reader.ReadUInt16();
+                mHash = reader.ReadUInt16();
+                mAttrAndNameOffs = reader.ReadUInt32();
+                mData = reader.ReadUInt32();
+                mDataSize = reader.ReadUInt32();
             }
         }
-
-        [Flags]
-        public enum FileAttribute
+        public JKRFileAttr mAttr;
+        public Node mNode;
+        public JKRFolderNode mFolderNode;
+        public JKRFolderNode mParentNode;
+        public string mName;
+        public ushort mNameOffs;
+        public byte[] mData;
+        public bool IsDir => mAttr.HasFlag(JKRFileAttr.Directory);
+        public bool IsFile => mAttr.HasFlag(JKRFileAttr.File);
+        public override string ToString()
         {
-            FILE = 0x01,
-            DIRECTORY = 0x02,
-            COMPRESSED = 0x04,
-            PRELOAD_TO_MRAM = 0x10,
-            PRELOAD_TO_ARAM = 0x20,
-            LOAD_FROM_DVD = 0x40,
-            YAZ0_COMPRESSED = 0x80
-        }
-
-        public class RARCDirectory : IStringPoolWritable
-        {
-            public string Name { get; set; }
-            public RARC Parent;
-            public uint ID;
-            public uint NameOffset;
-            public ushort Hash;
-            public ushort NodeCount;
-            public uint FirstNodeOffset;
-            public bool IsSubDir = false;
-            public bool IsRoot => ParentDir is null;
-            public List<RARCFile> Nodes = new List<RARCFile>();
-            public List<RARCDirectory> SubDirs = new List<RARCDirectory>();
-            public RARCDirectory ParentDir = null;
-
-            public RARCDirectory(RARC parent, ref EndianReader reader)
+            var list = new List<string>()
             {
-                Parent = parent;
-                ID = reader.ReadNumeric<uint>();
-                NameOffset = reader.ReadNumeric<uint>();
-                Hash = reader.ReadNumeric<ushort>();
-                NodeCount = reader.ReadNumeric<ushort>();
-                FirstNodeOffset = reader.ReadNumeric<uint>();
-            }
-
-            internal RARCDirectory() { }
-
-            public override string ToString()
-            {
-                if (IsSubDir)
-                {
-                    List<RARCDirectory> names = new List<RARCDirectory>();
-                    RARCDirectory dir = ParentDir;
-                    if (dir.IsRoot)
-                        names.Add(dir);
-                    while (dir.IsSubDir)
-                    {
-                        names.Add(dir);
-                        dir = dir.ParentDir;
-                        if (!dir.IsSubDir)
-                            names.Add(dir);
-                    }
-                    names.Reverse();
-                    StringBuilder builder = new StringBuilder();
-                    names.ForEach(x => { builder.Append(x.Name); builder.Append("->"); });
-                    builder.Append(Name);
-                    return builder.ToString();
-                }
-                else return Name;
-            }
-
-            public void WriteToPool(StringPool pool) => pool.Write(this);
-        }
-
-        public class RARCFile : IStringPoolWritable
-        {
-            public string Name { get; set; }
-
-            public RARCDirectory Parent;
-
-            public bool IsDir => (((byte)Flags) & 2) >> 1 is 1;
-
-            public ushort ID;
-
-            public ushort Hash;
-
-            public FileAttribute Flags = FileAttribute.FILE | FileAttribute.PRELOAD_TO_MRAM;
-
-            public uint Size;
-
-            public uint Offset;
-
-            public ushort NameOffset;
-
-            public byte[] Data;
-
-            public const byte SizeOf = 16;
-
-            public RARCFile(ref EndianReader reader)
-            {
-                ID = reader.ReadNumeric<ushort>();
-                Hash = reader.ReadNumeric<ushort>();
-                if (!reader.Reverse)
-                {
-                    NameOffset = reader.ReadNumeric<ushort>();
-                    reader.Seek(1, SeekOrigin.Current);
-                    Flags = (FileAttribute)reader.ReadByte();
-                }
-                else
-                {
-                    Flags = (FileAttribute)reader.ReadByte();
-                    reader.Seek(1, SeekOrigin.Current);
-                    NameOffset = reader.ReadNumeric<ushort>();
-                }
-                Offset = reader.ReadNumeric<uint>();
-                Size = reader.ReadNumeric<uint>();
-            }
-
-            public void ReplaceData(byte[] buf)
-            {
-                if (Flags.HasFlag(FileAttribute.DIRECTORY))
-                    throw new Exception("FileNode is NOT a actual file.");
-                Data = buf;
-                Size = (uint)buf.Length;
-            }
-
-            public override string ToString()
-            {
-                List<RARCDirectory> names = new List<RARCDirectory>();
-                RARCDirectory dir = Parent;
-                if (Parent.IsRoot)
-                    names.Add(dir);
-                while (dir.IsSubDir)
-                {
-                    names.Add(dir);
-                    dir = dir.ParentDir;
-                    if (!dir.IsSubDir)
-                        names.Add(dir);
-                }
-                names.Reverse();
-                StringBuilder builder = new StringBuilder();
-                names.ForEach(x => {builder.Append(x.Name); builder.Append("->");});
-                builder.Append(Name);
-                return builder.ToString();
-            }
-
-            public uint CalcNextOffset()
-            {
-                if (ID == ushort.MaxValue)
-                    return Offset + 1;
-                else
-                {
-                    uint off = 0;
-                    for (int i = 0; !(i > ID); i++)
-                    {
-                        var node = Parent.Nodes[i];
-                        off += node.Size;
-                    }
-                    return off;
-                }
-            }
-
-            internal RARCFile(FileInfo file, RARCDirectory dir, ushort idx)
-            {
-                Name = file.Name;
-                Hash = Calc_Hash(Name);
-                Size = (uint)file.Length;
-                Data = File.ReadAllBytes(file.FullName);
-                Parent = dir;
-                ID = idx;
-            }
-
-            internal RARCFile(RARCDirectory dir)
-            {
-                Parent = dir;
-            }
-
-            public void WriteToPool(StringPool pool) => pool.Write(this);
-        }
-
-        public RARC(EndianReader reader)
-        {
-            reader.Order = EndianStream.CurrentEndian;
-            var magic = reader.ReadNumeric<uint>();
-            reader.Order = magic switch
-            {
-                1129464146 => ByteOrder.BigEndian,
-                1380012611 => ByteOrder.LittleEndian,
-                _ => throw new Exception("File does not contain RARC/CRAR magic."),
+                mName
             };
-            Endian = reader.Order;
-            Header = new RARCHeader(ref reader);
-            long pos = reader.Position;
-            DataHeader = new RARCDataHeader(ref reader, (uint)pos);
-            Directories = new List<RARCDirectory>((int)DataHeader.DirCount);
-            reader.SeekBegin(DataHeader.DirOffset);
-            for (int i = 0; i < DataHeader.DirCount; i++)
-                Directories.Add(new RARCDirectory(this, ref reader));
-            for (int i = 0; i < Directories.Count; i++)
+            var parent = mParentNode;
+            if (parent != null)
             {
-                var offset = DataHeader.StringTableOffset + Directories[i].NameOffset;
-                using (reader.TempSeek(offset, SeekOrigin.Begin))
+                list.Add(parent.mName);
+                while (!parent.mIsRoot)
                 {
-                    Directories[i].Name = reader.ReadZeroTerminatedString(Encoding.ASCII);
+                    parent = parent.mDirectory.mParentNode;
+                    list.Add(parent.mName);
                 }
             }
-            for (int i = 0; i < Directories.Count; i++)
-            {
-                for (int n = 0; n < Directories[i].NodeCount; n++)
-                {
-                    reader.SeekBegin(DataHeader.NodeOffset + (n + Directories[i].FirstNodeOffset) * 0x14);
-                    var entry = new RARCFile(ref reader);
-                    var nameoff = DataHeader.StringTableOffset + entry.NameOffset;
-                    using (reader.TempSeek(nameoff, SeekOrigin.Begin))
-                    {
-                        entry.Name = reader.ReadZeroTerminatedString(Encoding.ASCII);
-                    }
-                    entry.Parent = Directories[i];
-                    if (entry.Flags.HasFlag(FileAttribute.FILE))
-                        using (reader.TempSeek(pos + Header.DataOffset + entry.Offset, 0))
-                            entry.Data = reader.ReadBytes((int)entry.Size);
-                    else if (entry.Flags.HasFlag(FileAttribute.DIRECTORY))
-                        if (!(entry.Name is ".." || entry.Name is "."))
-                        {
-                            RARCDirectory dir = Directories[(int)entry.Offset];
-                            dir.IsSubDir = true;
-                            dir.ParentDir = entry.Parent;
-                            entry.Parent.SubDirs.Add(dir);
-                        }
-                    Directories[i].Nodes.Add(entry);
-                }
-            }
-            Name = Directories[0].Name;
+            list.Reverse();
+            return string.Join("\\", list);
         }
+        
+    }
 
-        public byte[] Save()
+    public class JKRArchive
+    {
+        public List<JKRFolderNode> mFolderNodes = new List<JKRFolderNode>();
+        public List<JKRDirectory> mDirectories = new List<JKRDirectory>();
+        public JKRFolderNode mRoot;
+        public ushort mNextFileIdx;
+        public bool mSync;
+        public JKRArchiveHeader mHeader;
+        public JKRArchiveDataHeader mDataHeader;
+        public ByteOrder Order { get; set; }
+        public JKRArchive(EndianReader reader)
         {
-            using EndianStream ms = new EndianStream();
-            using EndianWriter writer = new EndianWriter(ms, false);
-            writer.Order = Endian;
-            Encoding enc = Encoding.ASCII;
-            switch (Endian)
+            string magic = reader.ReadSizedString(0x4, Encoding.ASCII);
+            if (magic != "RARC" && magic != "CRAR")
+                throw new Exception("Magic is not valid!");
+            Order = magic is "RARC" ? ByteOrder.BigEndian : ByteOrder.LittleEndian;
+            reader.Order = Order;
+            mHeader = new JKRArchiveHeader(reader);
+            mDataHeader = new JKRArchiveDataHeader(reader);
+            mNextFileIdx = reader.ReadUInt16();
+            mSync = reader.ReadBoolean();
+            Debug.Assert(mHeader.mHeaderSize == Unsafe.SizeOf<JKRArchiveHeader>() + 0x4);
+            reader.SeekBegin(mDataHeader.mDirNodeOffset + mHeader.mHeaderSize);
+            mFolderNodes.Capacity = (int)mDataHeader.mDirNodeCount;
+            mDirectories.Capacity = (int)mDataHeader.mFileNodeCount;
+            for (var i = 0; i < mDataHeader.mDirNodeCount; i++)
             {
-                case ByteOrder.BigEndian:
-                    writer.Write(enc.GetBytes("RARC"));
-                    break;
-                case ByteOrder.LittleEndian:
-                    writer.Write(enc.GetBytes("CRAR"));
-                    break;
-            }
-            var pool = StringPool.GetAllOffsets(this);
-            DataHeader.StringTableSize = (uint)pool.buffer.Count;
-            DataHeader.DirCount = (uint)Directories.Count;
-            #region Header
-            writer.Write(Header.Size);
-            writer.Write(Header.HeaderSize);
-            writer.Write(Header.DataOffset);
-            writer.Write(Header.FileDataSize);
-            writer.Write(Header.MRAMSize);
-            writer.Write(Header.ARAMSize);
-            writer.Write(Header.DVDSize);
-            #endregion
-            #region DataHeader
-            writer.Write(DataHeader.DirCount);
-            writer.Write(DataHeader.DirOffset - 32);
-            writer.Write(DataHeader.TotalNodeCount);
-            writer.Write(DataHeader.NodeOffset - 32);
-            writer.Write(DataHeader.StringTableSize);
-            var pos = writer.BaseStream.Position;
-            // SKIP StringTable's offset, WILL COME BACK.
-            writer.Seek(4, SeekOrigin.Current);
-            writer.Write(DataHeader.NodeCount);
-            writer.Write(DataHeader.Sync);
-            writer.Write(DataHeader.Padding);
-            #endregion
-            writer.Seek((int)DataHeader.DirOffset, 0);
-            #region DirNode Writing
-            for (int i = 0; i < DataHeader.DirCount; i++)
-            {
-                RARCDirectory dir = Directories[i];
-                writer.Write(dir.ID);
-                writer.Write(dir.NameOffset);
-                writer.Write(dir.Hash);
-                writer.Write(dir.NodeCount);
-                writer.Write(dir.FirstNodeOffset);
-            }
-            #endregion
-            #region FileNode Writing
-            for (int i = 0; i < Directories.Count; i++)
-            {
-                for (int n = 0; n < Directories[i].NodeCount; n++)
+                JKRFolderNode node = new JKRFolderNode
                 {
-                    writer.Seek((int)(DataHeader.NodeOffset + (n + Directories[i].FirstNodeOffset) * 0x14), 0);
-                    RARCFile file = Directories[i].Nodes[n];
-                    writer.Write(file.ID);
-                    writer.Write(file.Hash);
-                    if (!writer.Reverse)
-                    {
-                        writer.Write(file.NameOffset);
-                        writer.Seek(1, SeekOrigin.Current);
-                        writer.Write((byte)file.Flags);
-                    }
-                    else
-                    {
-                        writer.Write((byte)file.Flags);
-                        writer.Seek(1, SeekOrigin.Current);
-                        writer.Write(file.NameOffset);
-                    }
-                    writer.Write(file.Offset);
-                    writer.Write(file.Size);
-                    if (file.Flags.HasFlag(FileAttribute.FILE))
-                        using (writer.TempSeek(32 + Header.DataOffset + file.Offset, 0))
-                            writer.Write(file.Data);
-                }
-            }
-            #endregion
-            var strpos = writer.BaseStream.Position;
-            // Safety Check.
-            strpos = strpos > DataHeader.StringTableOffset ? strpos : DataHeader.StringTableOffset;
-            for (int i = 0; i < Directories.Count; i++)
-            {
-                var off = strpos + Directories[i].NameOffset;
-                using (writer.TempSeek(off, 0))
-                    writer.WriteZeroTerminatedString(Directories[i].Name, Encoding.ASCII);
-                for (int n = 0; n < Directories[i].NodeCount; n++)
+                    mNode = new JKRFolderNode.Node(reader)
+                };
+                using (reader.TempSeek(mDataHeader.mStringTableOffset + mHeader.mHeaderSize + node.mNode.mNameOffs, 0))
+                    node.mName = reader.ReadZeroTerminatedString(Encoding.ASCII);
+                if (mRoot is null)
                 {
-                    off = strpos + Directories[i].Nodes[n].NameOffset;
-                    using (writer.TempSeek(off, 0))
-                        writer.WriteZeroTerminatedString(Directories[i].Nodes[n].Name, Encoding.ASCII);
+                    node.mIsRoot = true;
+                    mRoot = node;
                 }
+                mFolderNodes.Add(node);
             }
-            writer.Seek((int)pos, SeekOrigin.Begin);
-            // DataHeader.StringTableOffset
-            writer.Write((uint)(strpos - 0x20));
-            return ms.ToArray();
+            reader.SeekBegin(mDataHeader.mFileNodeOffset + mHeader.mHeaderSize);
+            for (int i = 0; i < mDataHeader.mFileNodeCount; i++)
+            {
+                JKRDirectory dir = new JKRDirectory
+                {
+                    mNode = new JKRDirectory.Node(reader)
+                };
+                reader.Seek(0x4, SeekOrigin.Current);
+                dir.mNameOffs = (ushort)(dir.mNode.mAttrAndNameOffs & 0x00FFFFFF);
+                dir.mAttr = (JKRFileAttr)(dir.mNode.mAttrAndNameOffs >> 24);
+                using (reader.TempSeek(mDataHeader.mStringTableOffset + mHeader.mHeaderSize + dir.mNameOffs, 0))
+                    dir.mName = reader.ReadZeroTerminatedString(Encoding.ASCII);
+                if (dir.IsDir && dir.mNode.mData != 0xFFFFFFFF)
+                {
+                    dir.mFolderNode = mFolderNodes[(int)dir.mNode.mData];
+                    if (dir.mFolderNode.mNode.mHash == dir.mNode.mHash)
+                        dir.mFolderNode.mDirectory = dir;
+                } else if (dir.IsFile)
+                {
+                    using (reader.TempSeek(mHeader.mFileDataOffset + mHeader.mHeaderSize + dir.mNode.mData, 0))
+                        dir.mData = reader.ReadBytes((int)dir.mNode.mDataSize);
+
+                }
+                mDirectories.Add(dir);
+            }
+            for (int x = 0; x < mFolderNodes.Count; x++)
+            {
+                var node = mFolderNodes[x];
+                for (var y = node.mNode.mFirstFileOffs; y < (node.mNode.mFirstFileOffs + node.mNode.mFileCount); y++)
+                {
+                    JKRDirectory childdir = mDirectories[(int)y];
+                    if (childdir.mName is ".." || childdir.mName is ".")
+                        continue;
+                    childdir.mParentNode = node;
+                    if (childdir.IsDir)
+                        childdir.mFolderNode.mDirectory.mParentNode = node;
+                    node.mChildDirectories.Add(childdir);
+                    mDirectories[(int)y] = childdir;
+                }
+                mFolderNodes[x] = node;
+            }
         }
-
-        public static ushort Calc_Hash(string str)
+        public void Extract()
         {
-            int hash = 0;
-            for (int i = 0; i < str.Length; i++)
+            foreach (var file in mDirectories.Where(x => x.IsFile))
             {
-                hash *= 3;
-                hash += str[i];
-                hash = ushort.MaxValue & hash;
+                string path = file.mParentNode.ToString();
+                Directory.CreateDirectory(path);
+                File.WriteAllBytes(file.ToString(), file.mData);
             }
-
-            return (ushort)hash;
         }
     }
 }

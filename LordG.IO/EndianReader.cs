@@ -116,6 +116,12 @@ namespace LordG.IO
             return encoding.GetString(list.ToArray());
         }
 
+        public string ReadSizedString(int len, Encoding encoding)
+        {
+            byte[] buf = ReadBytes(len);
+            return encoding.GetString(buf);
+        }
+
         public void Seek(long pos, SeekOrigin origin) => BaseStream.Seek(pos, origin);
 
         public void Seek(uint pos, SeekOrigin origin) => BaseStream.Seek(pos, origin);
