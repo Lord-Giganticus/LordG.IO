@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace LordG.IO.Other
+﻿namespace LordG.IO.Other
 {
     internal static class Crc32
     {

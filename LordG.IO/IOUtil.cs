@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-namespace LordG.IO
+﻿namespace LordG.IO
 {
     public class FileIOBase
     {

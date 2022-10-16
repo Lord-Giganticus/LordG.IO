@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.IO;
-using Syroot.BinaryData;
-using LordG.IO.Other;
-
-namespace LordG.IO
+﻿namespace LordG.IO
 {
     public struct SarcData
     {
@@ -77,7 +70,7 @@ namespace LordG.IO
 
         static uint StringHashToUint(string name)
         {
-            if (name.Contains("."))
+            if (name.Contains('.'))
                 name = name.Split('.')[0];
             if (name.Length != 8) throw new Exception("Invalid hash length");
             return Convert.ToUInt32(name, 16);
@@ -152,8 +145,8 @@ namespace LordG.IO
         {
             int align = _align >= 0 ? _align : (int)GuessAlignment(data.Files);
 
-            MemoryStream o = new MemoryStream();
-            BinaryDataWriter bs = new BinaryDataWriter(o, false)
+            MemoryStream o = new();
+            BinaryDataWriter bs = new(o, false)
             {
                 ByteOrder = data.byteOrder
             };
@@ -168,7 +161,7 @@ namespace LordG.IO
             bs.Write((ushort)0xc);
             bs.Write((ushort)data.Files.Keys.Count);
             bs.Write((uint)0x00000065);
-            List<uint> offsetToUpdate = new List<uint>();
+            List<uint> offsetToUpdate = new();
 
             //Sort files by hash
             string[] Keys = data.Files.Keys.OrderBy(x => data.HashOnly ? StringHashToUint(x) : NameHash(x)).ToArray();
@@ -186,7 +179,7 @@ namespace LordG.IO
             bs.Write("SFNT", BinaryStringFormat.NoPrefixOrTermination);
             bs.Write((ushort)0x8);
             bs.Write((ushort)0);
-            List<uint> StringOffsets = new List<uint>();
+            List<uint> StringOffsets = new();
             foreach (string k in Keys)
             {
                 StringOffsets.Add((uint)bs.BaseStream.Position);
@@ -194,7 +187,7 @@ namespace LordG.IO
                 bs.Align(4);
             }
             bs.Align(0x1000); //TODO: check if works in odyssey
-            List<uint> FileOffsets = new List<uint>();
+            List<uint> FileOffsets = new();
             foreach (string k in Keys)
             {
                 bs.Align((int)GuessFileAlignment(data.Files[k]));
@@ -225,8 +218,8 @@ namespace LordG.IO
 
         public static SarcData UnpackRamN(Stream src)
         {
-            Dictionary<string, byte[]> res = new Dictionary<string, byte[]>();
-            BinaryDataReader bs = new BinaryDataReader(src, leaveOpen: false)
+            Dictionary<string, byte[]> res = new();
+            BinaryDataReader bs = new(src, leaveOpen: false)
             {
                 ByteOrder = ByteOrder.LittleEndian
             };
@@ -242,10 +235,10 @@ namespace LordG.IO
             bs.ReadUInt32(); // File size
             uint startingOff = bs.ReadUInt32();
             bs.ReadUInt32(); // Unknown;
-            SFAT sfat = new SFAT();
-            sfat.Parse(bs, (int)bs.BaseStream.Position);
-            SFNT sfnt = new SFNT();
-            sfnt.Parse(bs, (int)bs.BaseStream.Position, sfat, (int)startingOff);
+            SFAT sfat = new();
+            sfat.Parse(bs);
+            SFNT sfnt = new();
+            sfnt.Parse(bs, (int)startingOff);
 
             bool HashOnly = false;
             if (sfat.nodeCount > 0)
@@ -289,7 +282,7 @@ namespace LordG.IO
 
         public class SFAT
         {
-            public List<Node> nodes = new List<Node>();
+            public List<Node> nodes = new();
 
             public ushort chunkSize;
             public ushort nodeCount;
@@ -305,7 +298,7 @@ namespace LordG.IO
                 public uint EON;
             }
 
-            public void Parse(BinaryDataReader bs, int pos)
+            public void Parse(BinaryDataReader bs)
             {
                 bs.ReadUInt32(); // Header;
                 chunkSize = bs.ReadUInt16();
@@ -332,13 +325,13 @@ namespace LordG.IO
 
         public class SFNT
         {
-            public List<string> fileNames = new List<string>();
+            public List<string> fileNames = new();
 
             public uint chunkID;
             public ushort chunkSize;
             public ushort unknown1;
 
-            public void Parse(BinaryDataReader bs, int pos, SFAT sfat, int start)
+            public void Parse(BinaryDataReader bs, int start)
             {
                 chunkID = bs.ReadUInt32();
                 chunkSize = bs.ReadUInt16();

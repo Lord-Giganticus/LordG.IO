@@ -1,11 +1,4 @@
-﻿using System;
-using System.Text;
-using System.IO;
-using Syroot.BinaryData;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-
-namespace LordG.IO
+﻿namespace LordG.IO
 {
     public class EndianWriter : BinaryWriter
     {
@@ -76,13 +69,19 @@ namespace LordG.IO
 
         public void WriteZeroTerminatedString(string str, Encoding enc)
         {
-            StringBuilder builder = new StringBuilder(str);
+            StringBuilder builder = new(str);
             builder.Append('\0');
             Write(enc.GetBytes(builder.ToString()));
         }
 
+        public void Align32()
+        {
+            while (BaseStream.Position % 32 != 0)
+                WriteNumeric<byte>(0x0);
+        }
+
         public static explicit operator EndianWriter(Stream stream) =>
-            new EndianWriter(stream, false);
+            new(stream, false);
 
         #region Overrides
         public override void Write(decimal value)

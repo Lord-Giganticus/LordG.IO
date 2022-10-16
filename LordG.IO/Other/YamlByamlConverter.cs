@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
-using SharpYaml.Serialization;
+﻿using SharpYaml.Serialization;
 using System.Globalization;
-using Syroot.BinaryData;
 
 
 namespace LordG.IO.Other
@@ -13,10 +8,10 @@ namespace LordG.IO.Other
     {
         //Generate a list of all complex dynamic values that are used for reference nodes
         //The tag will be an ID to set the dynamic value
-        private static Dictionary<dynamic, YamlNode> NodePaths = new Dictionary<dynamic, YamlNode>();
+        private static Dictionary<dynamic, YamlNode> NodePaths = new();
 
         //Used for saving by mapping tags to dynamic values
-        private static Dictionary<string, dynamic> ReferenceNodes = new Dictionary<string, dynamic>();
+        private static Dictionary<string, dynamic> ReferenceNodes = new();
 
         //id to keep track of reference nodes
         static int refNodeId = 0;
@@ -47,7 +42,7 @@ namespace LordG.IO.Other
             refNodeId = 0;
 
             YamlNode root = SaveNode("root", data.RootNode);
-            YamlMappingNode mapping = new YamlMappingNode();
+            YamlMappingNode mapping = new();
             mapping.Add("Version", data.Version.ToString());
             mapping.Add("IsBigEndian", (data.byteOrder == ByteOrder.BigEndian).ToString());
             mapping.Add("SupportPaths", data.SupportPaths.ToString());
@@ -58,7 +53,7 @@ namespace LordG.IO.Other
             refNodeId = 0;
             var doc = new YamlDocument(mapping);
 
-            YamlStream stream = new YamlStream(doc);
+            YamlStream stream = new(doc);
             var buffer = new StringBuilder();
             using var writer = new StringWriter(buffer);
             stream.Save(writer, true);
@@ -266,7 +261,7 @@ namespace LordG.IO.Other
 
         private static YamlMappingNode ConvertPathPoint(ByamlPathPoint point)
         {
-            YamlMappingNode node = new YamlMappingNode();
+            YamlMappingNode node = new();
             node.Style = SharpYaml.YamlStyle.Flow;
             node.Add("X", point.Position.X.ToString());
             node.Add("Y", point.Position.Y.ToString());

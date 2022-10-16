@@ -1,8 +1,4 @@
-﻿using System;
-using System.IO;
-using Syroot.BinaryData;
-
-namespace LordG.IO
+﻿namespace LordG.IO
 {
     /// <summary>
     /// A Stream that makes passing the data to higher types better. Inherits <see cref="MemoryStream"/>
@@ -51,7 +47,7 @@ namespace LordG.IO
 
         #region Implicit
 
-        public static implicit operator EndianStream(byte[] src) => new EndianStream(src);
+        public static implicit operator EndianStream(byte[] src) => new(src);
         
         public static implicit operator BinaryDataReader(EndianStream src) => src.ToReader();
 
@@ -89,9 +85,9 @@ namespace LordG.IO
 
         #region Protected Methods
 
-        protected virtual BinaryDataReader ToReader() => new BinaryDataReader(this, false);
+        protected virtual BinaryDataReader ToReader() => new(this, false);
 
-        protected virtual BinaryDataWriter ToWriter() => new BinaryDataWriter(this, false);
+        protected virtual BinaryDataWriter ToWriter() => new(this, false);
 
         #endregion
 

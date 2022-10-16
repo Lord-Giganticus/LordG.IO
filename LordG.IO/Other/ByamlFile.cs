@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Syroot.BinaryData;
+﻿using System.Collections;
 using Syroot.Maths;
 
 namespace LordG.IO.Other
@@ -70,7 +64,7 @@ namespace LordG.IO.Other
         /// <param name="byteOrder">The <see cref="ByteOrder"/> to read data in.</param>
         public static BymlFileData LoadN(string fileName, bool supportPaths = false, ByteOrder byteOrder = ByteOrder.LittleEndian)
         {
-            using FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using FileStream stream = new(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
             return LoadN(stream, supportPaths, byteOrder);
         }
 
@@ -83,7 +77,7 @@ namespace LordG.IO.Other
         /// <param name="byteOrder">The <see cref="ByteOrder"/> to read data in.</param>
         public static BymlFileData LoadN(Stream stream, bool supportPaths = false, ByteOrder byteOrder = ByteOrder.LittleEndian)
         {
-            ByamlFile byamlFile = new ByamlFile(supportPaths, byteOrder, 3);
+            ByamlFile byamlFile = new(supportPaths, byteOrder, 3);
             var r = byamlFile.Read(stream);
             return new BymlFileData() { byteOrder = byamlFile._byteOrder, RootNode = r, Version = byamlFile._version, SupportPaths = supportPaths };
         }
@@ -97,7 +91,7 @@ namespace LordG.IO.Other
         /// <param name="byteOrder">The <see cref="ByteOrder"/> to read data in.</param>
         public static BymlFileData FastLoadN(Stream stream, bool supportPaths = false, ByteOrder byteOrder = ByteOrder.LittleEndian)
         {
-            ByamlFile byamlFile = new ByamlFile(supportPaths, byteOrder, 3, true);
+            ByamlFile byamlFile = new(supportPaths, byteOrder, 3, true);
             var r = byamlFile.Read(stream);
             return new BymlFileData() { byteOrder = byamlFile._byteOrder, RootNode = r, Version = byamlFile._version, SupportPaths = supportPaths };
         }
@@ -108,13 +102,13 @@ namespace LordG.IO.Other
         /// </summary>
         public static void SaveN(string fileName, BymlFileData file)
         {
-            using FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None);
+            using FileStream stream = new(fileName, FileMode.Create, FileAccess.Write, FileShare.None);
             SaveN(stream, file);
         }
 
         public static byte[] SaveN(BymlFileData file)
         {
-            using MemoryStream stream = new MemoryStream();
+            using MemoryStream stream = new();
             SaveN(stream, file);
             return stream.ToArray();
         }
@@ -125,7 +119,7 @@ namespace LordG.IO.Other
         /// </summary>
         public static void SaveN(Stream stream, BymlFileData file)
         {
-            ByamlFile byamlFile = new ByamlFile(file.SupportPaths, file.byteOrder, file.Version);
+            ByamlFile byamlFile = new(file.SupportPaths, file.byteOrder, file.Version);
             byamlFile.Write(stream, file.RootNode);
         }
 
@@ -181,7 +175,7 @@ namespace LordG.IO.Other
         private dynamic Read(Stream stream)
         {
             // Open a reader on the given stream.
-            using BinaryDataReader reader = new BinaryDataReader(stream, Encoding.UTF8, true);
+            using BinaryDataReader reader = new(stream, Encoding.UTF8, true);
             reader.ByteOrder = _byteOrder;
 
             // Load the header, specifying magic bytes ("BY"), version and main node offsets.
@@ -364,7 +358,7 @@ namespace LordG.IO.Other
 
         private List<dynamic> ReadArrayNode(BinaryDataReader reader, int length, uint offset = 0)
         {
-            List<dynamic> array = new List<dynamic>(length);
+            List<dynamic> array = new(length);
 
             if (_fastLoad && offset != 0) AlreadyReadNodes.Add(offset, array);
 
@@ -382,7 +376,7 @@ namespace LordG.IO.Other
 
         private Dictionary<string, dynamic> ReadDictionaryNode(BinaryDataReader reader, int length, uint offset = 0)
         {
-            Dictionary<string, dynamic> dictionary = new Dictionary<string, dynamic>();
+            Dictionary<string, dynamic> dictionary = new();
 
             if (_fastLoad && offset != 0) AlreadyReadNodes.Add(offset, dictionary);
 
@@ -401,7 +395,7 @@ namespace LordG.IO.Other
 
         private List<string> ReadStringArrayNode(BinaryDataReader reader, int length)
         {
-            List<string> stringArray = new List<string>(length);
+            List<string> stringArray = new(length);
 
             // Read the element offsets.
             long nodeOffset = reader.Position - 4; // String offsets are relative to the start of node.
@@ -421,7 +415,7 @@ namespace LordG.IO.Other
 
         private List<List<ByamlPathPoint>> ReadPathArrayNode(BinaryDataReader reader, int length)
         {
-            List<List<ByamlPathPoint>> pathArray = new List<List<ByamlPathPoint>>(length);
+            List<List<ByamlPathPoint>> pathArray = new(length);
 
             // Read the element offsets.
             long nodeOffset = reader.Position - 4; // Path offsets are relative to the start of node.
@@ -442,7 +436,7 @@ namespace LordG.IO.Other
 
         private List<ByamlPathPoint> ReadPath(BinaryDataReader reader, int length)
         {
-            List<ByamlPathPoint> byamlPath = new List<ByamlPathPoint>();
+            List<ByamlPathPoint> byamlPath = new();
             for (int j = 0; j < length; j++)
             {
                 byamlPath.Add(ReadPathPoint(reader));
@@ -452,7 +446,7 @@ namespace LordG.IO.Other
 
         private ByamlPathPoint ReadPathPoint(BinaryDataReader reader)
         {
-            ByamlPathPoint point = new ByamlPathPoint();
+            ByamlPathPoint point = new();
             point.Position = new Vector3F(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
             point.Normal = new Vector3F(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
             point.Unknown = reader.ReadUInt32();
@@ -477,14 +471,14 @@ namespace LordG.IO.Other
             _nameArray = new List<string>();
             _stringArray = new List<string>();
             _pathArray = new List<List<ByamlPathPoint>>();
-            List<dynamic> tmp = new List<dynamic>();
+            List<dynamic> tmp = new();
             CollectNodeArrayContents(root, ref tmp);
             tmp.Clear();
             _nameArray.Sort(StringComparer.Ordinal);
             _stringArray.Sort(StringComparer.Ordinal);
 
             // Open a writer on the given stream.
-            using BinaryDataWriter writer = new BinaryDataWriter(stream, Encoding.UTF8, true);
+            using BinaryDataWriter writer = new(stream, Encoding.UTF8, true);
             writer.ByteOrder = _byteOrder;
 
             // Write the header, specifying magic bytes, version and main node offsets.
@@ -574,7 +568,7 @@ namespace LordG.IO.Other
             }
         }
 
-        Dictionary<dynamic, uint> alreadyWrittenNodes = new Dictionary<dynamic, uint>();
+        Dictionary<dynamic, uint> alreadyWrittenNodes = new();
         private Offset WriteValue(BinaryDataWriter writer, dynamic value)
         {
             // Only reserve and return an offset for the complex value contents, write simple values directly.
@@ -706,7 +700,7 @@ namespace LordG.IO.Other
 
             // Write the elements, which begin after a padding to the next 4 bytes.
             writer.Align(4);
-            Dictionary<Offset, dynamic> offsets = new Dictionary<Offset, dynamic>();
+            Dictionary<Offset, dynamic> offsets = new();
             foreach (dynamic element in node)
             {
                 var off = WriteValue(writer, element);
@@ -730,7 +724,7 @@ namespace LordG.IO.Other
                 .OrderBy(x => x.Key, StringComparer.Ordinal).ToList();
 
             // Write the key-value pairs.
-            Dictionary<Offset, dynamic> offsets = new Dictionary<Offset, dynamic>();
+            Dictionary<Offset, dynamic> offsets = new();
             foreach (var keyValuePair in sortedDict)
             {
                 // Get the index of the key string in the file's name array and write it together with the type.
@@ -763,7 +757,7 @@ namespace LordG.IO.Other
             WriteTypeAndLength(writer, ByamlNodeType.StringArray, node);
 
             for (int i = 0; i <= node.Count(); i++) writer.Write(new byte[4]); //Space for offsets
-            List<uint> offsets = new List<uint>();
+            List<uint> offsets = new();
             foreach (string str in node)
             {
                 offsets.Add((uint)writer.BaseStream.Position - NodeStartPos);

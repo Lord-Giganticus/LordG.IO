@@ -1,8 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
-
-namespace LordG.IO
+﻿namespace LordG.IO
 {
     public static class Yaz0
     {

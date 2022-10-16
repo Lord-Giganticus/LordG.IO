@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace LordG.IO
+﻿namespace LordG.IO
 {
     public static class YAZ0Util
     {

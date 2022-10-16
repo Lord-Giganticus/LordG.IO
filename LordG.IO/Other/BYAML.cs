@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using LordG.IO.Properties;
+﻿using LordG.IO.Properties;
 
 namespace LordG.IO.Other
 {
@@ -29,7 +26,7 @@ namespace LordG.IO.Other
             return true;
         }
 
-        private static readonly Dictionary<uint, string> hashes = new Dictionary<uint, string>();
+        private static readonly Dictionary<uint, string> hashes = new();
 
         public static Dictionary<uint, string> Hashes
         {

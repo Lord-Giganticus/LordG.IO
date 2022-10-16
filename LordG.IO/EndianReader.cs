@@ -1,12 +1,4 @@
-﻿using Syroot.BinaryData;
-using System.IO;
-using System.Text;
-using System;
-using System.Runtime.CompilerServices;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-
-namespace LordG.IO
+﻿namespace LordG.IO
 {
     public class EndianReader : BinaryReader
     {
@@ -76,7 +68,7 @@ namespace LordG.IO
 
         public byte[] ToArray()
         {
-            using EndianStream stream = new EndianStream(BaseStream);
+            using EndianStream stream = new(BaseStream);
             return (byte[])stream;
         }
 
@@ -88,7 +80,7 @@ namespace LordG.IO
         public string ReadZeroTerminatedString(Encoding encoding)
         {
             int byteCount = encoding.GetByteCount("a");
-            List<byte> list = new List<byte>();
+            List<byte> list = new();
             switch (byteCount)
             {
                 case 1:
@@ -131,7 +123,7 @@ namespace LordG.IO
         public void SeekBegin(long pos) => Seek(pos, SeekOrigin.Begin);
 
         public static explicit operator EndianReader(Stream stream) =>
-            new EndianReader(stream, false);
+            new(stream, false);
 
         #region Overrides
         public override decimal ReadDecimal()

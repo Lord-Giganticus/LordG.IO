@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LordG.IO.Other
+﻿namespace LordG.IO.Other
 {
     /// <summary>
     /// Represents errors that occur when trying to process invalid BYAML data.

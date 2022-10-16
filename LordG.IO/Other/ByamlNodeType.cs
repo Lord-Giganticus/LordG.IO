@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace LordG.IO.Other
+﻿namespace LordG.IO.Other
 {
-	/// <summary>
-	/// Represents the type of which a dynamic BYAML node can be.
-	/// </summary>
-	internal enum ByamlNodeType : byte
+    /// <summary>
+    /// Represents the type of which a dynamic BYAML node can be.
+    /// </summary>
+    internal enum ByamlNodeType : byte
 	{
         /// <summary>
         /// Represents an empty type. Used to detect path nodes
