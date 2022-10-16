@@ -22,6 +22,6 @@ jobs:
       env:
         NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}  
     - name: Build
-      run: dotnet publish --configuration Release
+      run: dotnet build --configuration Release
     - name: Publish
       run: dotnet nuget push "LordG.IO/bin/Release/LordG.IO.1.2.0.nupkg" --skip-duplicate
